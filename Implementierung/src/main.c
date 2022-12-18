@@ -81,7 +81,7 @@ int main(int argc, char* argv[argc]) {
 				ATOI_nCC(img_h, tkns[0], img_h < 1);
 				break;
 			case 'n':
-				ATOI_nCC(iter_n, optarg, (iter_n > 0) );
+				ATOI_nCC(iter_n, optarg, iter_n < 1 );
 				break;
 			case 'r':
 				ATOF_S(incr, optarg);
