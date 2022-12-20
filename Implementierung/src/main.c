@@ -6,6 +6,9 @@
 #include <errno.h>
 #include <complex.h>
 #include <string.h>
+#include <alloca.h>
+
+#include "utils.h"
 
 //TODO debugging
 #define ATOI_nCC(var, arg, fcond) errno = 0; \
@@ -32,11 +35,11 @@ int main(int argc, char* argv[argc]) {
 	int impl_ind = 0;
 	int time_cap = -1;
 	float complex s_val;
-	int img_w;
-	int img_h;
-	int iter_n;
+	int img_w = 500;
+	int img_h = 600;
+	int iter_n = 10;
 	float incr;
-	char* file_name = "prog";
+	char* file_name = "burning_ship";
 
 	int opt;
 	int l_optind;
@@ -49,6 +52,7 @@ int main(int argc, char* argv[argc]) {
 	};
 
 	// UPDATES parameters
+	// TODO parameters that must be set
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1 ) {
 		switch (opt) {
 			case 'V':
@@ -78,7 +82,7 @@ int main(int argc, char* argv[argc]) {
 					goto Lerr;
 
 				ATOI_nCC(img_w, tkns[0], img_w < 1);
-				ATOI_nCC(img_h, tkns[0], img_h < 1);
+				ATOI_nCC(img_h, tkns[1], img_h < 1);
 				break;
 			case 'n':
 				ATOI_nCC(iter_n, optarg, iter_n < 1 );
@@ -97,12 +101,30 @@ int main(int argc, char* argv[argc]) {
 				printf("%s\n", usage_v);
 				exit(EXIT_SUCCESS);
 			case '?': 
-				if ( optopt == 'B' )
+				if ( optopt == 'B' || optopt == 'V' )
 					break;
 			default:
 				goto Lerr;
 		}
 	}
+
+	unsigned char* img;
+	if ( (img = malloc(img_w * img_h + sizeof (BMP_H) + COLORP_S * COLORP_ES + 1) ) == NULL) // 1 for newline at EOF
+		goto Lerr;
+
+	printf("Caculating results\n");
+	//burning_ship(s_val, img_w, img_h, incr, iter_n, img);
+
+	char* path = alloca(strlen(file_name)+1 + 2 + 4);
+	strncpy(path, "./", 3);
+	strncat(path, file_name, strlen(file_name)+1);
+	strncat(path, ".bmp", 5);
+
+	printf("Writing image\n");
+	BMP_H bmph = creat_bmph(img_w, img_h);
+	writef_bmp(img, path, bmph);
+
+	free(img);
 	return EXIT_SUCCESS;
 Lerr:
 	printf("%s\n", usage);
