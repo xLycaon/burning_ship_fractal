@@ -7,6 +7,7 @@
 #define MAGIC 0x424D //TODO little endian format
 #define COLORP_S 2
 #define COLORP_ES 4
+#define PAD_ALIGN 4
 
 typedef uint32_t uint32_2a __attribute__((__aligned__(2)));
 

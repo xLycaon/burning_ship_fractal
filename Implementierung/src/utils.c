@@ -2,7 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __APPLE__
+#include <libkern/OSByteOrder.h>
+#define bswap_16(x) OSSwapInt16(x)
+#define bswap_32(x) OSSwapInt32(x)
+#define bswap_64(x) OSSwapInt64(x)
+#else
 #include <byteswap.h>
+#endif
 
 #include "utils.h"
 
@@ -25,12 +33,14 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) { //TODO annahme 1 
 	fwrite((char *) &bmph, 1, sizeof (BMP_H), file);
 
 	// Write color pallet data into file
+	/*
 	COLORP cp = { .entry[0] = 0xFFFFFF00, .entry[1] = 0x00000000};
 	printf("Size of color pallet: %ld\n", sizeof (COLORP));
 	fwrite(&cp, 1, COLORP_S * COLORP_ES, file); //TODO better solution for color pallet
+	*/
 
 	// Write image data into file
-	unsigned char npad = 32 - (width % 32);
+	unsigned char npad = PAD_ALIGN - (width % PAD_ALIGN); //TODO
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
 	size_t y = 0;
@@ -57,12 +67,13 @@ creat_bmph(size_t img_w, size_t img_h) { // bswap for big endian -> little endia
 	bmp.img_width = bswap_32(img_w);
 	bmp.img_height = bswap_32(img_h);
 	bmp.planes = bswap_16(1);
-	bmp.bpp = bswap_16(8);
+	bmp.bpp = bswap_16(8); //TODO
 	bmp.compression = 0;
 	bmp.img_size = 0;
 	bmp.Xppm = 0;
 	bmp.Yppm = 0;
-	bmp.total_colors = bswap_32(2);
+	//bmp.total_colors = bswap_32(2); //TODO
+	bmp.total_colors = 0; //TODO
 	bmp.important_colors = 0;
 	return bmp;
 }

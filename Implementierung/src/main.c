@@ -7,10 +7,12 @@
 #include <complex.h>
 #include <string.h>
 
-#ifndef _WIN32
-#include <alloca.h>
-#else
+#ifdef _WIN32
 #include <malloc.h>
+#define _alloca(x) alloca(x)
+#define _malloca(x) alloca(x)
+#else
+#include <alloca.h>
 #endif
 
 #include "utils.h"
@@ -123,17 +125,12 @@ int main(int argc, char* argv[argc]) {
 	//burning_ship(s_val, img_w, img_h, incr, iter_n, img);
 	//TODO just for testing
 	img[0] = 0;
-	img[1] = 1;
+	img[1] = 0xff;
 	img[2] = 0;
-	img[3] = 1;
+	img[3] = 0xff;
 
 
-	char* path;
-#ifndef _WIN32
-	path = alloca(strlen(file_name)+1 + 2 + 4);
-#else
-	path = _malloca(strlen(file_name)+1 + 2 + 4);
-#endif
+	char* path = alloca(strlen(file_name)+1 + 2 + 4);
 	strncpy(path, "./", 3);
 	strncat(path, file_name, strlen(file_name)+1);
 	strncat(path, ".bmp", 5);
