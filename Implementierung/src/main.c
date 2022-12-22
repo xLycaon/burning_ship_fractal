@@ -131,7 +131,7 @@ int main(int argc, char* argv[argc]) {
 #ifndef _WIN32
 	path = alloca(strlen(file_name)+1 + 2 + 4);
 #else
-	path = _alloca(strlen(file_name)+1 + 2 + 4);
+	path = _malloca(strlen(file_name)+1 + 2 + 4);
 #endif
 	strncpy(path, "./", 3);
 	strncat(path, file_name, strlen(file_name)+1);
