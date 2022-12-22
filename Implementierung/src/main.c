@@ -6,7 +6,11 @@
 #include <errno.h>
 #include <complex.h>
 #include <string.h>
+#include <malloc.h>
+
+#ifndef _WIN32
 #include <alloca.h>
+#endif
 
 #include "utils.h"
 
@@ -122,7 +126,13 @@ int main(int argc, char* argv[argc]) {
 	img[2] = 0;
 	img[3] = 1;
 
-	char* path = alloca(strlen(file_name)+1 + 2 + 4);
+
+	char* path;
+#ifndef _WIN32
+	path = alloca(strlen(file_name)+1 + 2 + 4);
+#else
+	path = _alloca(strlen(file_name)+1 + 2 + 4);
+#endif
 	strncpy(path, "./", 3);
 	strncat(path, file_name, strlen(file_name)+1);
 	strncat(path, ".bmp", 5);
