@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAGIC 0x424D
+#define MAGIC 0x424D //TODO little endian format
 #define COLORP_S 2
 #define COLORP_ES 4
 
@@ -13,7 +13,7 @@ typedef uint32_t uint32_2a __attribute__((__aligned__(2)));
 // Mapping of BMP format which is 54 bytes long
 typedef struct {
 	uint16_t magic;
-	uint32_2a size;
+	uint32_2a fsize;
 	uint32_2a reserved;
 	uint32_2a dib_offset;
 	uint32_2a header_size;
@@ -34,5 +34,11 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph);
 
 BMP_H
 creat_bmph(size_t img_w, size_t img_h);
+
+//TODO idea for converting big-endian to little-endian BMP-Format for file write
+void
+cvtbmph_bele(BMP_H* bmph);
+void
+cvtbmph_lebe(BMP_H* bmph);
 
 #endif

@@ -1,14 +1,11 @@
-CPP = cpp
 CC = gcc-12
-CPPFLAGS = -std=c17 -pedantic
-CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR)
+CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE -D_XOPEN_SOURCE
 
 SRCDIR = src
 INCLDIR = incl
 OUT = prog
 
 SRC = $(wildcard $(SRCDIR)/*.c)
-#INCL = $(wildcard $(INCLDIR)/*.h)
 
 .PHONY: clean run all debug
 

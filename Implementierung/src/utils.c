@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <byteswap.h>
 
 #include "utils.h"
 
@@ -8,9 +10,14 @@ typedef struct {
 	uint32_2a entry[2];
 } COLORP;
 
-//TODO newline appended at the end after fwrite
+//TODO fix newline append at the end after fwrite EOF
+//TODO reading out values from BMP_H
 void
 writef_bmp(unsigned char* img, const char* path, BMP_H bmph) { //TODO annahme 1 Pixel ist 1 Byte
+	//TODO val little endian to val big endian
+	uint32_t width = bswap_32(bmph.img_width);
+	uint32_t height = bswap_32(bmph.img_height);
+
 	FILE* file;
 	if ( (file = fopen(path, "w")) == NULL )
 		exit(EXIT_FAILURE);
@@ -24,28 +31,56 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) { //TODO annahme 1 
 	fwrite(&cp, 1, COLORP_S * COLORP_ES, file); //TODO better solution for color pallet
 
 	// Write image data into file
-	unsigned char npad = 32 - (bmph.img_width % 32);
+	unsigned char npad = 32 - (width % 32);
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
-	for (size_t y = 0; y < bmph.img_height; y++) {
-		fwrite(&img[y * bmph.img_width], 1, bmph.img_width, file);
+	size_t y = 0;
+	for (; y < height; y++) { // TODO h - 1 writes ?
+		fwrite(&img[y * width], 1, width, file);
 		// ROW PADDING
 		fwrite(zeros, 1, npad, file);
 	}
+
+	/*
+	//Changing last byte of file (EOF alias \n) to last byte of data (img or padding) for correct bmp format
+	int fd = fileno(file);
+	int cur_fpos;
+	if ( !npad ) {
+		// Writing last row without last byte of data
+		fwrite(&img[y * width], 1, width-1, file);
+
+		// Overriding last byte of file
+		cur_fpos = ftell(file);
+		pwrite(fd, &img[y * width - 1], cur_fpos);
+	} else {
+		// Writing last row without last byte of data
+		fwrite(&img[y * width], 1, width, file);
+		fwrite(zeros, 1, npad-1, file);
+
+		// Overriding last byte of file
+		cur_fpos = ftell(file);
+		pwrite(fd, &zeros[0], cur_fpos);
+	}
+	*/
 }
 
 BMP_H
-creat_bmph(size_t img_w, size_t img_h) {
+creat_bmph(size_t img_w, size_t img_h) { // bswap for big endian -> little endian
+	// TODO CAUTION: bswap_x is a macro not a function
+	uint32_2a file_size = img_w * img_h + sizeof (BMP_H) + sizeof (COLORP) + 1; // 1 for EOF
+	uint32_2a dib_off = sizeof (BMP_H);
+	uint32_2a h_size = sizeof (BMP_H) - 14;
+
 	BMP_H bmp;
-	bmp.magic = MAGIC;
-	bmp.size = img_w * img_h;
+	bmp.magic = bswap_16(MAGIC);
+	bmp.fsize = bswap_32(file_size);
 	bmp.reserved = 0;
-	bmp.dib_offset = sizeof (BMP_H);
-	bmp.header_size = sizeof (BMP_H) - 14;
-	bmp.img_width = img_w;
-	bmp.img_height = img_h;
-	bmp.planes = 1;
-	bmp.bpp = 8;
+	bmp.dib_offset = bswap_32(dib_off);
+	bmp.header_size = bswap_32(h_size);
+	bmp.img_width = bswap_32(img_w);
+	bmp.img_height = bswap_32(img_h);
+	bmp.planes = bswap_16(1);
+	bmp.bpp = bswap_16(8);
 	bmp.compression = 0;
 	bmp.img_size = 0;
 	bmp.Xppm = 0;

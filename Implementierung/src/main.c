@@ -28,15 +28,17 @@ int main(int argc, char* argv[argc]) {
 	"[-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>] [-r <Floating Point Zahl>]";
 	const char* const usage_v = "TEST"; // TODO verbose usage man
 
+	/*
 	if (argc == 1)
 		goto Lerr;
+		*/
 
 	// DEFAULT parameter values
 	int impl_ind = 0;
 	int time_cap = -1;
 	float complex s_val;
-	int img_w = 500;
-	int img_h = 600;
+	int img_w = 2;
+	int img_h = 2;
 	int iter_n = 10;
 	float incr;
 	char* file_name = "burning_ship";
@@ -114,6 +116,11 @@ int main(int argc, char* argv[argc]) {
 
 	printf("Caculating results\n");
 	//burning_ship(s_val, img_w, img_h, incr, iter_n, img);
+	//TODO just for testing
+	img[0] = 0;
+	img[1] = 1;
+	img[2] = 0;
+	img[3] = 1;
 
 	char* path = alloca(strlen(file_name)+1 + 2 + 4);
 	strncpy(path, "./", 3);
