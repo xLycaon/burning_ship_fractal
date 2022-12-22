@@ -6,10 +6,11 @@
 #include <errno.h>
 #include <complex.h>
 #include <string.h>
-#include <malloc.h>
 
 #ifndef _WIN32
 #include <alloca.h>
+#else
+#include <malloc.h>
 #endif
 
 #include "utils.h"
