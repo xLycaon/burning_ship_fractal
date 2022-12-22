@@ -10,7 +10,6 @@ typedef struct {
 	uint32_2a entry[2];
 } COLORP;
 
-//TODO fix newline append at the end after fwrite EOF
 //TODO reading out values from BMP_H
 void
 writef_bmp(unsigned char* img, const char* path, BMP_H bmph) { //TODO annahme 1 Pixel ist 1 Byte
@@ -35,40 +34,18 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) { //TODO annahme 1 
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
 	size_t y = 0;
-	for (; y < height; y++) { // TODO h - 1 writes ?
+	for (; y < height; y++) {
 		fwrite(&img[y * width], 1, width, file);
 		// ROW PADDING
 		fwrite(zeros, 1, npad, file);
 	}
-
-	/*
-	//Changing last byte of file (EOF alias \n) to last byte of data (img or padding) for correct bmp format
-	int fd = fileno(file);
-	int cur_fpos;
-	if ( !npad ) {
-		// Writing last row without last byte of data
-		fwrite(&img[y * width], 1, width-1, file);
-
-		// Overriding last byte of file
-		cur_fpos = ftell(file);
-		pwrite(fd, &img[y * width - 1], cur_fpos);
-	} else {
-		// Writing last row without last byte of data
-		fwrite(&img[y * width], 1, width, file);
-		fwrite(zeros, 1, npad-1, file);
-
-		// Overriding last byte of file
-		cur_fpos = ftell(file);
-		pwrite(fd, &zeros[0], cur_fpos);
-	}
-	*/
 }
 
 BMP_H
 creat_bmph(size_t img_w, size_t img_h) { // bswap for big endian -> little endian
 	// TODO CAUTION: bswap_x is a macro not a function
-	uint32_2a file_size = img_w * img_h + sizeof (BMP_H) + sizeof (COLORP) + 1; // 1 for EOF
-	uint32_2a dib_off = sizeof (BMP_H);
+	uint32_2a file_size = img_w * img_h + sizeof (BMP_H) + sizeof (COLORP);
+	uint32_2a dib_off = sizeof (BMP_H) + sizeof (COLORP);
 	uint32_2a h_size = sizeof (BMP_H) - 14;
 
 	BMP_H bmp;
@@ -85,7 +62,7 @@ creat_bmph(size_t img_w, size_t img_h) { // bswap for big endian -> little endia
 	bmp.img_size = 0;
 	bmp.Xppm = 0;
 	bmp.Yppm = 0;
-	bmp.total_colors = 0;
+	bmp.total_colors = bswap_32(2);
 	bmp.important_colors = 0;
 	return bmp;
 }

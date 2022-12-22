@@ -111,7 +111,7 @@ int main(int argc, char* argv[argc]) {
 	}
 
 	unsigned char* img;
-	if ( (img = malloc(img_w * img_h + sizeof (BMP_H) + COLORP_S * COLORP_ES + 1) ) == NULL) // 1 for newline at EOF
+	if ( (img = malloc(img_w * img_h + sizeof (BMP_H) + COLORP_S * COLORP_ES) ) == NULL)
 		goto Lerr;
 
 	printf("Caculating results\n");
