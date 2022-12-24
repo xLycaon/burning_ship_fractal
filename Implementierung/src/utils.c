@@ -14,66 +14,73 @@
 
 #include "utils.h"
 
-typedef struct {
-	uint32_2a entry[2];
-} COLORP;
-
-//TODO reading out values from BMP_H
-void
-writef_bmp(unsigned char* img, const char* path, BMP_H bmph) { //TODO annahme 1 Pixel ist 1 Byte
-	//TODO val little endian to val big endian
-	uint32_t width = bswap_32(bmph.img_width);
-	uint32_t height = bswap_32(bmph.img_height);
-
-	FILE* file;
-	if ( (file = fopen(path, "w")) == NULL )
+//TODO inline? then without malloc?
+static void*
+gscale_img24bmp(unsigned char* img, BMP_H bmph) {
+	unsigned char* n_img; //TODO malloc clean?
+	if ( (n_img = malloc(bmph.img_width*BYTESPP * bmph.img_height*BYTESPP)) == NULL ) //TODO failure handling here or in main
 		exit(EXIT_FAILURE);
 
-	// Write bmp header into file
+	for (size_t y = 0; y < bmph.img_height; y++) {
+		for (size_t x = 0; x < bmph.img_width; x++) {
+			size_t off = x * BYTESPP + y * bmph.img_width*BYTESPP;
+			size_t cur_i = x + y * bmph.img_width;
+			n_img[off] = img[cur_i];
+			n_img[off+1] = img[cur_i];
+			n_img[off+2] = img[cur_i];
+		}
+	}
+	return n_img;
+}
+
+//TODO scaling of BMP must also be handled in main
+void
+writef_bmp(unsigned char* img, const char* path, BMP_H bmph) {
+	FILE* file;
+	if ( (file = fopen(path, "w")) == NULL ) //TODO failure handling here or in main
+		exit(EXIT_FAILURE);
+
+	// Write BMP HEADER into file
 	fwrite((char *) &bmph, 1, sizeof (BMP_H), file);
 
-	// Write color pallet data into file
-	/*
-	COLORP cp = { .entry[0] = 0xFFFFFF00, .entry[1] = 0x00000000};
-	printf("Size of color pallet: %ld\n", sizeof (COLORP));
-	fwrite(&cp, 1, COLORP_S * COLORP_ES, file); //TODO better solution for color pallet
-	*/
-
-	// Write image data into file
-	unsigned char npad = PAD_ALIGN - (width % PAD_ALIGN); //TODO
+	// Write IMAGE DATA into file
+	
+	// Set padding to MAX 3 (PAD_ALIGN - 1)
+	unsigned char npad = (PAD_ALIGN - (bmph.img_width*BYTESPP % PAD_ALIGN));
+	npad = npad % PAD_ALIGN ? npad : 0;
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
-	size_t y = 0;
-	for (; y < height; y++) {
-		fwrite(&img[y * width], 1, width, file);
+
+	// Scale w x h img to 24bbp bmp (w*3) x (h*3) greyscale
+	unsigned char* img_scld = gscale_img24bmp(img, bmph);
+
+	for (size_t y = 0; y < bmph.img_height; y++) {
+		fwrite(&img_scld[y * bmph.img_width*BYTESPP], 1, bmph.img_width*BYTESPP, file);
 		// ROW PADDING
 		fwrite(zeros, 1, npad, file);
 	}
+	free(img_scld);
 }
 
+//TODO big endian to little endian if parameters are larger than max number range for 1 byte
+//TODO for example in fsize
 BMP_H
 creat_bmph(size_t img_w, size_t img_h) { // bswap for big endian -> little endian
-	// TODO CAUTION: bswap_x is a macro not a function
-	uint32_2a file_size = img_w * img_h + sizeof (BMP_H) + sizeof (COLORP);
-	uint32_2a dib_off = sizeof (BMP_H) + sizeof (COLORP);
-	uint32_2a h_size = sizeof (BMP_H) - 14;
-
 	BMP_H bmp;
 	bmp.magic = bswap_16(MAGIC);
-	bmp.fsize = bswap_32(file_size);
+	bmp.fsize = img_w*BYTESPP * img_h*BYTESPP + sizeof (BMP_H);
 	bmp.reserved = 0;
-	bmp.dib_offset = bswap_32(dib_off);
-	bmp.header_size = bswap_32(h_size);
-	bmp.img_width = bswap_32(img_w);
-	bmp.img_height = bswap_32(img_h);
-	bmp.planes = bswap_16(1);
-	bmp.bpp = bswap_16(8); //TODO
+	bmp.dib_offset = sizeof (BMP_H);
+	bmp.header_size = sizeof (BMP_H) - 14;
+	bmp.img_width = img_w;
+	bmp.img_height = img_h;
+	bmp.planes = 1;
+	bmp.bpp = BYTESPP * 8;
 	bmp.compression = 0;
 	bmp.img_size = 0;
 	bmp.Xppm = 0;
 	bmp.Yppm = 0;
-	//bmp.total_colors = bswap_32(2); //TODO
-	bmp.total_colors = 0; //TODO
+	bmp.total_colors = 0;
 	bmp.important_colors = 0;
 	return bmp;
 }

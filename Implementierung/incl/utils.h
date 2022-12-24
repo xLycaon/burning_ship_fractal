@@ -4,10 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAGIC 0x424D //TODO little endian format
-#define COLORP_S 2
-#define COLORP_ES 4
+#define MAGIC 0x424D 
 #define PAD_ALIGN 4
+#define BYTESPP 3 // 24 (bpp) / 8 (bits)
 
 typedef uint32_t uint32_2a __attribute__((__aligned__(2)));
 
