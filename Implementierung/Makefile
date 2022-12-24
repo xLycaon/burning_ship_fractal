@@ -16,6 +16,7 @@ $(OUT): $(SRC)
 clean:
 	rm -f $(OUT)
 	rm -f *.bmp
+	rm -r *.dSYM
 
 run:
 	./$(OUT) -h

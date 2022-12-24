@@ -29,9 +29,9 @@ void burning_ship(float complex start, size_t width, size_t height,
 				zx = xtmp;
 			}
 			if (i == n) {
-				img[w + h * height] = 0;
+				img[w + h * height] = 0xff;
 			} else { //TODO color by number of iterations?
-				img[w + h * height] = 1;
+				img[w + h * height] = 0;
 			}
 		}
 	}
