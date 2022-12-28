@@ -6,136 +6,207 @@
 #include <errno.h>
 #include <complex.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <malloc.h>
-#define _alloca(x) alloca(x)
-#define _malloca(x) alloca(x)
+#define alloca(x) _alloca(x)
 #else
 #include <alloca.h>
 #endif
 
 #include "utils.h"
 
-//TODO debugging
-#define ATOI_nCC(var, arg, fcond) errno = 0; \
-				  var = strtol(arg, &endptr, 10); \
-				  if ( errno != 0 || endptr == arg || *endptr != '\0' || fcond ) \
-				  	goto Lerr;
+//OPTION MASKS 0011
+#define D_MSK 0x1 // -d option 0001
+#define N_MSK 0x2 // -n option 0010
+#define ARO_MSK 0x3 // All required options 0011
+#define SET_ROPT(optv, msk) optv &= msk ^ ARO_MSK
 
-#define ATOF_S(var, arg) errno = 0; \
-				  var = strtof(arg, &endptr); \
-				  if ( errno != 0 || *endptr != '\0' || !var ) \
-				  	goto Lerr;
+#define MAX_ITER 1000
+#define MAX_N 200
+#define MIN_N 1
+
+/* redefinitions for atoi from stdlib.h */
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
+#define FAIL() exit(EXIT_FAILURE)
+
+#define ATOT_S(VAR, ARG, ENDPTR, T) \
+errno = 0; \
+VAR = T; \
+if ( *ENDPTR != '\0' ) { \
+	fprintf(stderr, "%c is not a digit!\n", *ENDPTR); \
+	FAIL(); \
+} else if ( errno != 0 ) { \
+	perror("OVERFLOW ERROR"); \
+	FAIL(); \
+}
+
+#define STRTOLT(NPTR, ENDPTR, T) T(NPTR, &ENDPTR, 10)
+#define STRTOFT(NPTR, ENDPTR, T) T(NPTR, &ENDPTR)
+
+#define ATOI_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOLT(ARG, ENDPTR, strtol))
+#define ATOLL_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOLT(ARG, ENDPTR, strtoll))
+#define ATOF_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOFT(ARG, ENDPTR, strtof))
+#define ATOD_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOFT(ARG, ENDPTR, strtod))
+
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
+#define TOKENIZE_TWO(TKNS, S_VAL, SEP) \
+TKNS[0] = strtok(S_VAL, SEP); \
+if ( (TKNS[1] = strtok(NULL, SEP)) == NULL ) { \
+	fprintf(stderr, "ERROR: Space after , or no argument!\n"); \
+	FAIL(); \
+}
+
+#define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V)
+//TODO
+/*
+#define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V) \
+if ( VAL < MIN_V || VAL > MAX_V ) { \
+	fprintf(stderr, "ERROR in -%c: %d is OUT OF RANGE %d to %d inclusive!\n", \
+			OPT, VAL, MIN_V, MAX_V); \
+	FAIL(); \
+} 
+*/
 
 extern void
 burning_ship(float complex start, size_t width, size_t height,
-		  float res, unsigned n, unsigned char* img);
+	     float res, unsigned n, unsigned char* img);
+
+// Function type of burning_ship
+typedef void (*bs_impl) (float complex start, size_t width, size_t height,
+		 	 float res, unsigned n, unsigned char* img);
 
 int main(int argc, char* argv[argc]) {
 	const char* const usage =
 	"usage: prog [-h | --help] [-o <Dateiname>]\n"
-	"[-V <Zahl>] [-B <Zahl>]\n"
-	"[-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>] [-r <Floating Point Zahl>]\n"
-	"[--bmpftest]";
-	//TODO verbose man
+	"            [-V <Zahl>] [-B <Zahl>] [-r <Floating Point Zahl>]\n"
+	"            [-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>]\n"
+	"            [--bmpftest]";
 	const char* const usage_v =
-		"usage: NO PARAMETERS ARE ACCEPTED OTHER THAN OPTIONS\n"
+		"\n"
+		"NO PARAMETERS ARE ACCEPTED OTHER THAN OPTIONS\n"
+		"\n"
 		"-h | --help *** displays verbose help\n"
-		"-d<width,height> *** Sets the dimensions of the output image. NO SPACE after , is allowed. Ex: -d100,200 or -d 100,200 but not d 100, 200.\n"
-		"--bmpftest *** Runs tests checking the validity of the output format and ingoring all options except for dimensions.";
+		"\n"
+		"-d<width,height> *** Sets the dimensions of the output image. NO SPACE after , is allowed.\n"
+		"Ex: -d100,200 or -d 100,200 but not -d100, 200.\n"
+		"\n"
+		"--bmpftest *** Runs tests checking the validity of the output format and ingoring all options except for dimensions."
+		"\n";
 
-	// DEFAULT parameter values
-	int impl_ind = 0;
-	int time_cap = -1;
-	float complex s_val = 0.0;
-	unsigned long img_w = 5;
-	unsigned long img_h = 5;
-	int iter_n = 10;
-	float incr = 1.0; //TODO
-	char* file_name = "burning_ship";
-	int is_test = 0;
+	// DEFAULT parameters
+	int impl_ind, time_cap, iter_n, is_test;
+	float s_real, s_imag, pres;
+	float complex s_val;
+	unsigned long img_w, img_h;
+	char* file_name;
 
-	int opt;
-	int l_optind;
-	char* endptr;
-	char* tkns[2];
-	const char* optstr = "V:B:s:d:n:r:o:h";
+	// DEFAULT VALUES for parameters
+	impl_ind = 0;
+	time_cap = -1;
+	is_test = 0;
+	pres = 1.0;
+	s_val = 0.0;
+	img_w = 0;
+	img_h = 0;
+	file_name = "bs";
+
+	// Other parameters required for getopt
+	int opt, l_optind;
+	char *endptr, *tkns[2], ropt_nset = ARO_MSK;
+	const char* optstr = ":V::B::s:d:n:r:o:h";
 	const struct option longopts[] = {
-		{"help", no_argument, NULL, 0},
+		{"help", no_argument, NULL, 'h'},
 		{"bmpftest", no_argument, NULL, 0},
 		{NULL, 0, NULL, 0}
 	};
 
-	// UPDATES parameters
-	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1 ) {
+	// List of burning_ship implementations
+	const bs_impl bs[] = {
+		burning_ship
+	};
+
+	// UPDATES DEFAULT PARAMETERS
+	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
 			case 'V':
-				ATOI_nCC(impl_ind, optarg, impl_ind < 0);
+				ATOI_S(impl_ind, optarg, endptr);
+				CHECK_RANGE(opt, impl_ind, 0, ARRAY_SIZE (bs) - 1);
 				break;
-			case 'B': 
-				ATOI_nCC(time_cap, optarg, time_cap < 1);
+			case 'B':
+				ATOI_S(time_cap, optarg, endptr);
+				CHECK_RANGE(opt, time_cap, 1, MAX_ITER);
 				break;
 			case 's':
-				float s_real;
-				float s_img;
-
-				if ( (tkns[0] = strtok(optarg, ",")) == NULL )
-					goto Lerr;
-				if ( (tkns[1] = strtok(NULL, ",")) == NULL )
-					goto Lerr;
-
-				ATOF_S(s_real, tkns[0]);
-				ATOF_S(s_img, tkns[1]);
-
-				s_val = s_real + I * s_img;
+				TOKENIZE_TWO(tkns, optarg, ",");
+				ATOF_S(s_real, tkns[0], endptr);
+				ATOF_S(s_imag, tkns[1], endptr);
+				s_val = s_real + I * s_imag;
 				break;
 			case 'd':
-				if ( (tkns[0] = strtok(optarg, ",")) == NULL )
-					goto Lerr;
-				if ( (tkns[1] = strtok(NULL, ",")) == NULL )
-					goto Lerr;
-
-				ATOI_nCC(img_w, tkns[0], img_w < 1);
-				ATOI_nCC(img_h, tkns[1], img_h < 1);
+				SET_ROPT(ropt_nset, D_MSK);
+				TOKENIZE_TWO(tkns, optarg, ",");
+				ATOI_S(img_w, tkns[0], endptr);
+				ATOI_S(img_h, tkns[1], endptr);
+				CHECK_RANGE(opt, img_w, 1, 2000);
+				CHECK_RANGE(opt, img_h, 1, 2000);
 				break;
 			case 'n':
-				ATOI_nCC(iter_n, optarg, iter_n < 1 );
+				SET_ROPT(ropt_nset, N_MSK);
+				ATOI_S(iter_n, optarg, endptr);
+				CHECK_RANGE(opt, iter_n, MIN_N, MAX_N);
 				break;
 			case 'r':
-				ATOF_S(incr, optarg);
+				ATOF_S(pres, optarg, endptr);
 				break;
-			case 'o':
-				file_name = optarg; //TODO max file length
-				break;
-			case 0:
-				if ( strncmp(longopts[l_optind].name, "bmpftest", 9) == 0 ) {
-					is_test = 1;
-					break;
-				} else if ( strncmp(longopts[l_optind].name, "help", 5) != 0 ) {
-					goto Lerr;
-				}
 			case 'h':
+				printf("%s\n", usage);
 				printf("%s\n", usage_v);
 				exit(EXIT_SUCCESS);
-			case '?': 
-				if ( optopt == 'B' || optopt == 'V' )
-					break;
-			default:
+			case 0:
+				if ( l_optind == 1 ) {
+					is_test = 1;
+				}
+				break;
+			case ':':
+				fprintf(stderr, "%c requires argument(s)!\n", optopt);
 				goto Lerr;
+				break;
+			case '?':
+				fprintf(stderr, "Option %c unrecognized!\n", optopt);
+				goto Lerr;
+				break;
 		}
 	}
 
-	//TODO edge case for long options and non options in combination
-	if ( optind != argc ) // no other elements than options in argv allowed
+	if ( optind != argc ) {
+		fprintf(stderr, "No paramters other than options are allowed\n");
 		goto Lerr;
+	}
+
+	if ( ropt_nset ) {
+		if ( ropt_nset & D_MSK ) {
+			fprintf(stderr, "Option -d is required but was not set!\n");
+		}
+
+		if ( (ropt_nset & N_MSK) && !is_test ) {
+			fprintf(stderr, "Option -n is required but was not set!\n");
+		}
+
+		if ( !is_test ) {
+			goto Lerr;
+		}
+	}
 
 	unsigned char* img;
 	if ( (img = malloc(img_w*BYTESPP * img_h*BYTESPP + sizeof (BMP_H)) ) == NULL)
 		goto Lerr;
 
 	printf("Caculating results\n");
-	//TODO
+	//TODO more simple
 	if ( is_test ) {
 		for (size_t i = 0; i < img_w*img_h; i++) {
 			//img[i] = 0xff;
@@ -147,12 +218,22 @@ int main(int argc, char* argv[argc]) {
 		}
 	} else {
 		if (time_cap > 0) {
-			//TODO run performance measurements
-			printf("Measurements not implemented yet\n");
-			free(img);
-			return EXIT_FAILURE;
+			struct timespec start;
+			struct timespec end;
+
+			clock_gettime(CLOCK_MONOTONIC, &start);
+			for (unsigned long i = 0; i < (unsigned) time_cap; i++) {
+				bs[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
+			}
+			clock_gettime(CLOCK_MONOTONIC, &end);
+			
+			double time = end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
+			double avg_time = time / time_cap;
+
+			printf("Width: %ld Height: %ld Iterations: %d\nTime spent: %f Average Time spent: %f\n",
+					img_w, img_h, time_cap, time, avg_time);
 		} else {
-			burning_ship(s_val, img_w, img_h, incr, iter_n, img);
+			bs[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
 		}
 	}
 
@@ -162,16 +243,23 @@ int main(int argc, char* argv[argc]) {
 	strncat(fpath, file_name, strlen(file_name)+1);
 	strncat(fpath, ".bmp", 5);
 
+	// WRITING IMAGE DATA INTO FILE
 	printf("Writing image\n");
 	BMP_H bmph = creat_bmph(img_w, img_h);
-	writef_bmp(img, fpath, bmph);
+	if ( writef_bmp(img, fpath, bmph) < 0 ) //TODO
+		goto Lerr;
 
 	free(img);
 	return EXIT_SUCCESS;
 Lerr:
-	printf("%s\n", usage);
 	exit(EXIT_FAILURE);
 }
 
-#undef ATOI_nCC
+#undef ATOT_S
+#undef STRTOLT
+#undef STRTOFT
+#undef ATOI_S
+#undef ATOLL_S
 #undef ATOF_S
+#undef ATOD_S
+

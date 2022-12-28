@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
+
+#define ARRAY_SIZE(arr) sizeof (arr) / sizeof (arr[0])
 
 #define MAGIC 0x424D 
 #define PAD_ALIGN 4
@@ -29,16 +32,14 @@ typedef struct {
 	uint32_2a important_colors;
 } BMP_H;
 
-void
+// Creates a file in BMP-format and writes header and image data into file specified by path.
+// Returns -1 on fail and number of bytes written on a successful write.
+ssize_t
 writef_bmp(unsigned char* img, const char* path, BMP_H bmph);
 
+// Returns a mapped BMP_H struct with the specified width and height of the image
+// and standard values required for the 24bmp format.
 BMP_H
 creat_bmph(size_t img_w, size_t img_h);
-
-//TODO idea for converting big-endian to little-endian BMP-Format for file write
-void
-cvtbmph_bele(BMP_H* bmph);
-void
-cvtbmph_lebe(BMP_H* bmph);
 
 #endif
