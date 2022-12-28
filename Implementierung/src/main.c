@@ -17,6 +17,28 @@
 
 #include "utils.h"
 
+//TODO
+#define PROGNAME "prog"
+
+#define USAGE \
+"usage: " PROGNAME " [-h | --help] [-o <Dateiname>]\n" \
+"            [-V <Zahl>] [-B <Zahl>] [-r <Floating Point Zahl>]\n" \
+"            [-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>]\n" \
+"            [--bmpftest]"
+
+//TODO
+#define USAGE_V \
+"\n" \
+"NO PARAMETERS ARE ACCEPTED OTHER THAN OPTIONS\n" \
+"\n" \
+"-h | --help *** displays verbose help\n" \
+"\n" \
+"-d<width,height> *** Sets the dimensions of the output image. NO SPACE after , is allowed.\n" \
+"Ex: -d100,200 or -d 100,200 but not -d100, 200.\n" \
+"\n" \
+"--bmpftest *** Runs tests checking the validity of the output format and ingoring all options except for dimensions." \
+"\n" \
+
 //OPTION MASKS 0011
 #define D_MSK 0x1 // -d option 0001
 #define N_MSK 0x2 // -n option 0010
@@ -30,17 +52,17 @@
 /* redefinitions for atoi from stdlib.h */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
-#define FAIL() exit(EXIT_FAILURE)
+#define FAIL(...) do {fprintf(stderr, __VA_ARGS__); printf("%s\n", USAGE); exit(EXIT_FAILURE);} while(0)
+#define FAIL_E() exit(EXIT_FAILURE);
 
 #define ATOT_S(VAR, ARG, ENDPTR, T) \
 errno = 0; \
 VAR = T; \
 if ( *ENDPTR != '\0' ) { \
-	fprintf(stderr, "%c is not a digit!\n", *ENDPTR); \
-	FAIL(); \
+	FAIL("%c is not a digit!\n", *ENDPTR); \
 } else if ( errno != 0 ) { \
 	perror("OVERFLOW ERROR"); \
-	FAIL(); \
+	FAIL_E(); \
 }
 
 #define STRTOLT(NPTR, ENDPTR, T) T(NPTR, &ENDPTR, 10)
@@ -56,8 +78,7 @@ if ( *ENDPTR != '\0' ) { \
 #define TOKENIZE_TWO(TKNS, S_VAL, SEP) \
 TKNS[0] = strtok(S_VAL, SEP); \
 if ( (TKNS[1] = strtok(NULL, SEP)) == NULL ) { \
-	fprintf(stderr, "ERROR: Space after , or no argument!\n"); \
-	FAIL(); \
+	FAIL("ERROR: Space after , or no argument!\n"); \
 }
 
 #define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V)
@@ -65,9 +86,8 @@ if ( (TKNS[1] = strtok(NULL, SEP)) == NULL ) { \
 /*
 #define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V) \
 if ( VAL < MIN_V || VAL > MAX_V ) { \
-	fprintf(stderr, "ERROR in -%c: %d is OUT OF RANGE %d to %d inclusive!\n", \
-			OPT, VAL, MIN_V, MAX_V); \
-	FAIL(); \
+	FAIL("ERROR in -%c: %d is OUT OF RANGE %d to %d inclusive!\n",
+	OPT, VAL, MIN_V, MAX_V); \
 } 
 */
 
@@ -80,22 +100,6 @@ typedef void (*bs_impl) (float complex start, size_t width, size_t height,
 		 	 float res, unsigned n, unsigned char* img);
 
 int main(int argc, char* argv[argc]) {
-	const char* const usage =
-	"usage: prog [-h | --help] [-o <Dateiname>]\n"
-	"            [-V <Zahl>] [-B <Zahl>] [-r <Floating Point Zahl>]\n"
-	"            [-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>]\n"
-	"            [--bmpftest]";
-	const char* const usage_v =
-		"\n"
-		"NO PARAMETERS ARE ACCEPTED OTHER THAN OPTIONS\n"
-		"\n"
-		"-h | --help *** displays verbose help\n"
-		"\n"
-		"-d<width,height> *** Sets the dimensions of the output image. NO SPACE after , is allowed.\n"
-		"Ex: -d100,200 or -d 100,200 but not -d100, 200.\n"
-		"\n"
-		"--bmpftest *** Runs tests checking the validity of the output format and ingoring all options except for dimensions."
-		"\n";
 
 	// DEFAULT parameters
 	int impl_ind, time_cap, iter_n, is_test;
@@ -163,8 +167,8 @@ int main(int argc, char* argv[argc]) {
 				ATOF_S(pres, optarg, endptr);
 				break;
 			case 'h':
-				printf("%s\n", usage);
-				printf("%s\n", usage_v);
+				printf("%s\n", USAGE);
+				printf("%s\n", USAGE_V);
 				exit(EXIT_SUCCESS);
 			case 0:
 				if ( l_optind == 1 ) {
