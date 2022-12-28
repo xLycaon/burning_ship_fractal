@@ -1,6 +1,5 @@
 CC = gcc-12
-CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE -D_XOPEN_SOURCE
-
+CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L
 SRCDIR = src
 INCLDIR = incl
 OUT = prog
@@ -16,7 +15,6 @@ $(OUT): $(SRC)
 clean:
 	rm -f $(OUT)
 	rm -f *.bmp
-	rm -r *.dSYM
 
 run:
 	./$(OUT) -h

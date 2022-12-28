@@ -39,21 +39,29 @@
 "--bmpftest *** Runs tests checking the validity of the output format and ingoring all options except for dimensions." \
 "\n" \
 
+#define FAIL(...) do {fprintf(stderr, __VA_ARGS__); printf("%s\n", USAGE); exit(EXIT_FAILURE);} while(0)
+#define FAIL_E() exit(EXIT_FAILURE);
+
 //OPTION MASKS 0011
 #define D_MSK 0x1 // -d option 0001
 #define N_MSK 0x2 // -n option 0010
 #define ARO_MSK 0x3 // All required options 0011
 #define SET_ROPT(optv, msk) optv &= msk ^ ARO_MSK
 
+// BOUND VALUES
 #define MAX_ITER 1000
+
 #define MAX_N 200
 #define MIN_N 1
 
+#define MIN_W 100
+#define MAX_W 1280
+
+#define MIN_H 100
+#define MAX_H 900
+
 /* redefinitions for atoi from stdlib.h */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-
-#define FAIL(...) do {fprintf(stderr, __VA_ARGS__); printf("%s\n", USAGE); exit(EXIT_FAILURE);} while(0)
-#define FAIL_E() exit(EXIT_FAILURE);
 
 #define ATOT_S(VAR, ARG, ENDPTR, T) \
 errno = 0; \
@@ -155,8 +163,8 @@ int main(int argc, char* argv[argc]) {
 				TOKENIZE_TWO(tkns, optarg, ",");
 				ATOI_S(img_w, tkns[0], endptr);
 				ATOI_S(img_h, tkns[1], endptr);
-				CHECK_RANGE(opt, img_w, 1, 2000);
-				CHECK_RANGE(opt, img_h, 1, 2000);
+				CHECK_RANGE(opt, img_w, MIN_W, MAX_W);
+				CHECK_RANGE(opt, img_h, MIN_H, MAX_H);
 				break;
 			case 'n':
 				SET_ROPT(ropt_nset, N_MSK);
@@ -176,19 +184,14 @@ int main(int argc, char* argv[argc]) {
 				}
 				break;
 			case ':':
-				fprintf(stderr, "%c requires argument(s)!\n", optopt);
-				goto Lerr;
-				break;
+				FAIL("%c requires argument(s)!\n", optopt);
 			case '?':
-				fprintf(stderr, "Option %c unrecognized!\n", optopt);
-				goto Lerr;
-				break;
+				FAIL("Option %c unrecognized!\n", optopt);
 		}
 	}
 
 	if ( optind != argc ) {
-		fprintf(stderr, "No paramters other than options are allowed\n");
-		goto Lerr;
+		FAIL("No paramters other than options are allowed\n");
 	}
 
 	if ( ropt_nset ) {
