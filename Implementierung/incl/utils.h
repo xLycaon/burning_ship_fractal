@@ -1,5 +1,4 @@
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -32,14 +31,9 @@ typedef struct {
 	uint32_2a important_colors;
 } BMP_H;
 
-// Creates a file in BMP-format and writes header and image data into file specified by path.
-// Returns -1 on fail and number of bytes written on a successful write.
 ssize_t
 writef_bmp(unsigned char* img, const char* path, BMP_H bmph);
 
-// Returns a mapped BMP_H struct with the specified width and height of the image
-// and standard values required for the 24bmp format.
 BMP_H
 creat_bmph(size_t img_w, size_t img_h);
 
-#endif
