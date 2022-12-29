@@ -17,9 +17,7 @@
 
 #include "utils.h"
 
-//TODO
 #define PROGNAME "prog"
-
 #define USAGE \
 "usage: " PROGNAME " [-h | --help] [-o <Dateiname>]\n" \
 "            [-V <Zahl>] [-B <Zahl>] [-r <Floating Point Zahl>]\n" \
@@ -119,6 +117,7 @@ int main(int argc, char* argv[argc]) {
 	// DEFAULT VALUES for parameters
 	impl_ind = 0;
 	time_cap = -1;
+	iter_n = 0;
 	is_test = 0;
 	pres = 1.0;
 	s_val = 0.0;
@@ -259,7 +258,7 @@ int main(int argc, char* argv[argc]) {
 	free(img);
 	return EXIT_SUCCESS;
 Lerr:
-	exit(EXIT_FAILURE);
+	FAIL_E();
 }
 
 #undef ATOT_S
