@@ -6,38 +6,6 @@ void burning_ship(float complex start, size_t width, size_t height,
 		  float res, unsigned n, unsigned char* img);
 
 static inline float
-scale_coordx(float x, size_t width);
-
-static inline float
-scale_coordy(float y, size_t height);
-
-//TODO res
-void burning_ship(float complex start, size_t width, size_t height,
-		  float res, unsigned n, unsigned char* img)
-{
-	float zx = creal(start);
-	float zy = cimag(start);
-	float xtmp;
-	for (size_t h = 0; h < height; h++) {
-		for (size_t w = 0; w < width; w++) {
-			float x = scale_coordx(w, width);
-			float y = scale_coordy(h, height);
-			unsigned i = 0;
-			for (; i < n && zx*zx + zy*zy < 4; i++) {
-				xtmp = zx*zx - zy*zy + x;
-				zy = fabs(2*zx*zy) + y;
-				zx = xtmp;
-			}
-			if (i == n) {
-				img[w + h * height] = 0xff;
-			} else { //TODO color by number of iterations?
-				img[w + h * height] = 0;
-			}
-		}
-	}
-}
-
-static inline float
 scale_coordx(float x, size_t width) {
 	return -2.5 + 3.5 * (x / width);
 }
@@ -46,3 +14,47 @@ static inline float
 scale_coordy(float y, size_t height) {
 	return -1 + 2 * (y / height);
 }
+
+//TODO using floating points is bad here
+//TODO better color conversion
+static unsigned char
+scale_gscolor(unsigned iter_n, unsigned n) {
+	return 0xFF - ((0xFF * (iter_n % n+1)) / n);
+}
+
+// c = cr + I * ci
+// Z(n+1) = (|Re(Z(n))| + I * |Imag(Z(n))|)^2 + c = (|zr| + I * |zi|)^2 + (cr + I * ci)
+// Re(Z(n+1)) = (zr)^2 - (zi)^2 + cr
+// Img(Z(n+1)) = 2|zr||zi| + ci = 2|zrzi| + ci
+void burning_ship(float complex start, size_t width, size_t height,
+		  float res, unsigned n, unsigned char* img)
+{
+	(void)res;
+	float zr, zi;
+	float cr, ci;
+	float complex zrtmp;
+	for (size_t h = 0; h < height; h++) {
+		for (size_t w = 0; w < width; w++) {
+			// Z(0) = 0
+			// Z(1) = (0+0)^2+c = cr + I * ci
+			zr = 0.0;
+			zi = 0.0;
+
+			// cr := x-coord + offset
+			// ci := y-coord + offset
+			cr = scale_coordx(w, width) + creal(start);
+			ci = scale_coordy(h, height) + cimag(start);
+
+			unsigned i = 0;
+			for (; i < n && zr*zr + zi*zi <= 4; i++) {
+				zrtmp = zr*zr - zi*zi + cr;
+				zi = 2 * fabs(zr*zi) + ci;
+				zr = zrtmp;
+			}
+
+			// COLORING PIXELS
+			img[w + h * width] = scale_gscolor(i, n);
+		}
+	}
+}
+
