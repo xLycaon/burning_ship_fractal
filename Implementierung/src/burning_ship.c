@@ -2,17 +2,23 @@
 #include <stddef.h>
 #include <math.h>
 
+#define SCALEX 2.5
+#define SCALEY 2.5
+#define SCOFFX 1
+#define SCOFFY 1
+#define LIMIT 100
+
 void burning_ship(float complex start, size_t width, size_t height,
 		  float res, unsigned n, unsigned char* img);
 
 static inline float
 scale_coordx(float x, size_t width) {
-	return -2.5 + 3.5 * (x / width);
+	return -SCALEX + (SCALEX+SCOFFX) * (x / width);
 }
 
 static inline float
 scale_coordy(float y, size_t height) {
-	return -1 + 2 * (y / height);
+	return -SCALEY + (SCALEY+SCOFFY) * (y / height);
 }
 
 //TODO using floating points is bad here
@@ -46,7 +52,7 @@ void burning_ship(float complex start, size_t width, size_t height,
 			ci = scale_coordy(h, height) + cimag(start);
 
 			unsigned i = 0;
-			for (; i < n && zr*zr + zi*zi <= 4; i++) {
+			for (; i < n && zr*zr + zi*zi <= LIMIT; i++) {
 				zrtmp = zr*zr - zi*zi + cr;
 				zi = 2 * fabs(zr*zi) + ci;
 				zr = zrtmp;
