@@ -29,12 +29,13 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) {
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
 
-	// Write IMAGE DATA into file
+	// Write IMAGE DATA row-wise reversed into file
 	for (size_t y = bmph.img_height-1; (y+1) > 0; y--) {
 		written += fwrite(&(img[y * bmph.img_width*BYTESPP]), 1, bmph.img_width*BYTESPP, file);
 		written += fwrite(zeros, 1, npad, file); // ROW PADDING
 	}
 
+	fclose(file);
 	return written;
 }
 

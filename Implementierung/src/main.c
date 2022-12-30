@@ -263,7 +263,5 @@ Lerr:
 #undef STRTOLT
 #undef STRTOFT
 #undef ATOI_S
-#undef ATOLL_S
 #undef ATOF_S
-#undef ATOD_S
 
