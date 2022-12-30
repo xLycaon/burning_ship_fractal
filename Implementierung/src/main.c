@@ -53,10 +53,10 @@
 #define MIN_N 1
 
 #define MIN_W 100
-#define MAX_W 1280
+#define MAX_W 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory
 
 #define MIN_H 100
-#define MAX_H 900
+#define MAX_H 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory
 
 /* redefinitions for atoi from stdlib.h */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -75,9 +75,7 @@ if ( *ENDPTR != '\0' ) { \
 #define STRTOFT(NPTR, ENDPTR, T) T(NPTR, &ENDPTR)
 
 #define ATOI_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOLT(ARG, ENDPTR, strtol))
-#define ATOLL_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOLT(ARG, ENDPTR, strtoll))
 #define ATOF_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOFT(ARG, ENDPTR, strtof))
-#define ATOD_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOFT(ARG, ENDPTR, strtod))
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
@@ -157,7 +155,7 @@ int main(int argc, char* argv[argc]) {
 				ATOF_S(s_imag, tkns[1], endptr);
 				s_val = s_real + I * s_imag;
 				break;
-			case 'd':
+			case 'd': //TODO handle great file sizes (couple of GBs)
 				SET_ROPT(ropt_nset, D_MSK);
 				TOKENIZE_TWO(tkns, optarg, ",");
 				ATOI_S(img_w, tkns[0], endptr);

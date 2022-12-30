@@ -13,24 +13,6 @@
 
 #include "utils.h"
 
-static void*
-gscale_img24bmp(unsigned char* img, BMP_H bmph) {
-	unsigned char* n_img;
-	if ( (n_img = malloc(bmph.img_width*BYTESPP * bmph.img_height*BYTESPP)) == NULL )
-		return NULL;
-
-	for (size_t y = 0; y < bmph.img_height; y++) {
-		for (size_t x = 0; x < bmph.img_width; x++) {
-			size_t off = x * BYTESPP + y * bmph.img_width*BYTESPP;
-			size_t cur_i = x + y * bmph.img_width;
-			n_img[off] = img[cur_i];
-			n_img[off+1] = img[cur_i];
-			n_img[off+2] = img[cur_i];
-		}
-	}
-	return n_img;
-}
-
 ssize_t
 writef_bmp(unsigned char* img, const char* path, BMP_H bmph) {
 	FILE* file;
@@ -47,17 +29,11 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) {
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
 
-	// Scale w x h img to 24bbp bmp (w*3) x (h*3) greyscale
-	unsigned char* img_scld;
-	if ( (img_scld = gscale_img24bmp(img, bmph)) == NULL )
-		return -1;
-
 	// Write IMAGE DATA into file
 	for (size_t y = bmph.img_height-1; (y+1) > 0; y--) {
-		written += fwrite(&(img_scld[y * bmph.img_width*BYTESPP]), 1, bmph.img_width*BYTESPP, file);
+		written += fwrite(&(img[y * bmph.img_width*BYTESPP]), 1, bmph.img_width*BYTESPP, file);
 		written += fwrite(zeros, 1, npad, file); // ROW PADDING
 	}
-	free(img_scld);
 
 	return written;
 }
