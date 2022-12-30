@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <math.h>
 
+//TODO BYTESPP
+#include "utils.h"
+
 #define SCALEX 2.5
 #define SCALEY 2.5
 #define SCOFFX 1
@@ -60,7 +63,7 @@ void burning_ship(float complex start, size_t width, size_t height,
 
 			// COLORING PIXELS
 			unsigned char gscolor = scale_gscolor(i, n);
-			size_t index = w + h * width;
+			size_t index = w*BYTESPP + h * width*BYTESPP;
 			img[index] = gscolor;
 			img[index + 1] = gscolor;
 			img[index + 2] = gscolor;
