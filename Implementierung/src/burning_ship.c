@@ -2,26 +2,23 @@
 #include <stddef.h>
 #include <math.h>
 
-//TODO BYTESPP
-#include "utils.h"
+#include "burning_ship.h"
+#include "utils.h" //TODO BYTESPP
 
-#define SCALEX 2.5
-#define SCALEY 2.5
+#define SCALEX 2.5f
+#define SCALEY 2.5f
 #define SCOFFX 1
 #define SCOFFY 1
 #define LIMIT 100
 
-void burning_ship(float complex start, size_t width, size_t height,
-		  float res, unsigned n, unsigned char* img);
-
 static inline float
 scale_coordx(float x, size_t width) {
-	return -SCALEX + (SCALEX+SCOFFX) * (x / width);
+	return -SCALEX + (SCALEX+SCOFFX) * (x / (float) width);
 }
 
 static inline float
 scale_coordy(float y, size_t height) {
-	return -SCALEY + (SCALEY+SCOFFY) * (y / height);
+	return -SCALEY + (SCALEY+SCOFFY) * (y / (float) height);
 }
 
 //TODO using floating points is bad here
@@ -46,8 +43,8 @@ void burning_ship(float complex start, size_t width, size_t height,
 		for (size_t w = 0; w < width; w++) {
 			// Z(0) = 0
 			// Z(1) = (0+0)^2+c = cr + I * ci
-			zr = 0.0;
-			zi = 0.0;
+			zr = 0.0f;
+			zi = 0.0f;
 
 			// cr := x-coord + offset
 			// ci := y-coord + offset
@@ -57,7 +54,7 @@ void burning_ship(float complex start, size_t width, size_t height,
 			unsigned i = 0;
 			for (; i < n && zr*zr + zi*zi <= LIMIT; i++) {
 				zrtmp = zr*zr - zi*zi + cr;
-				zi = 2 * fabs(zr*zi) + ci;
+				zi = 2.0f * fabsf(zr*zi) + ci;
 				zr = zrtmp;
 			}
 

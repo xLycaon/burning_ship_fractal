@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <errno.h>
 #include <complex.h>
-#include <string.h>
-#include <time.h>
 
 #ifdef _WIN32
 #include <malloc.h>
@@ -16,13 +14,14 @@
 #endif
 
 #include "utils.h"
+#include "burning_ship.h"
+#include "timer.h"
 
 #define PROGNAME "prog"
 #define USAGE \
 "usage: " PROGNAME " [-h | --help] [-o <Dateiname>]\n" \
 "            [-V <Zahl>] [-B <Zahl>] [-r <Floating Point Zahl>]\n" \
 "            [-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>]\n" \
-"            [--bmpftest]"
 
 //TODO
 #define USAGE_V \
@@ -33,8 +32,6 @@
 "\n" \
 "-d<width,height> *** Sets the dimensions of the output image. NO SPACE after , is allowed.\n" \
 "Ex: -d100,200 or -d 100,200 but not -d100, 200.\n" \
-"\n" \
-"--bmpftest *** Runs tests checking the validity of the output format and ingoring all options except for dimensions." \
 "\n" \
 
 #define FAIL(...) do {fprintf(stderr, __VA_ARGS__); printf("%s\n", USAGE); exit(EXIT_FAILURE);} while(0)
@@ -57,6 +54,9 @@
 
 #define MIN_H 100
 #define MAX_H 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory
+
+#define DPATH_LEN 2
+#define BMP_EXT_LEN 4
 
 /* redefinitions for atoi from stdlib.h */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -95,29 +95,20 @@ if ( VAL < MIN_V || VAL > MAX_V ) { \
 } 
 */
 
-extern void
-burning_ship(float complex start, size_t width, size_t height,
-	     float res, unsigned n, unsigned char* img);
-
-// Function type of burning_ship
-typedef void (*bs_impl) (float complex start, size_t width, size_t height,
-		 	 float res, unsigned n, unsigned char* img);
-
 int main(int argc, char* argv[argc]) {
 
 	// DEFAULT parameters
-	int impl_ind, time_cap, iter_n, is_test;
+	int /*impl_ind,*/ time_cap, iter_n;
 	float s_real, s_imag, pres;
 	float complex s_val;
 	unsigned long img_w, img_h;
 	char* file_name;
 
 	// DEFAULT VALUES for parameters
-	impl_ind = 0;
+	//impl_ind = 0;
 	time_cap = -1;
 	iter_n = 0;
-	is_test = 0;
-	pres = 1.0;
+	pres = 1.0f;
 	s_val = 0.0;
 	img_w = 0;
 	img_h = 0;
@@ -129,43 +120,44 @@ int main(int argc, char* argv[argc]) {
 	const char* optstr = ":V::B::s:d:n:r:o:h";
 	const struct option longopts[] = {
 		{"help", no_argument, NULL, 'h'},
-		{"bmpftest", no_argument, NULL, 0},
 		{NULL, 0, NULL, 0}
 	};
 
 	// List of burning_ship implementations
+    /*
 	const bs_impl bs[] = {
 		burning_ship
 	};
+     */
 
 	// UPDATES DEFAULT PARAMETERS
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
 			case 'V':
-				ATOI_S(impl_ind, optarg, endptr);
-				CHECK_RANGE(opt, impl_ind, 0, ARRAY_SIZE (bs) - 1);
+				//ATOI_S(impl_ind, optarg, endptr)
+				//CHECK_RANGE(opt, impl_ind, 0, ARRAY_SIZE (bs) - 1);
 				break;
 			case 'B':
 				ATOI_S(time_cap, optarg, endptr);
 				CHECK_RANGE(opt, time_cap, 1, MAX_ITER);
 				break;
 			case 's':
-				TOKENIZE_TWO(tkns, optarg, ",");
-				ATOF_S(s_real, tkns[0], endptr);
-				ATOF_S(s_imag, tkns[1], endptr);
+				TOKENIZE_TWO(tkns, optarg, ",")
+				ATOF_S(s_real, tkns[0], endptr)
+				ATOF_S(s_imag, tkns[1], endptr)
 				s_val = s_real + I * s_imag;
 				break;
 			case 'd': //TODO handle great file sizes (couple of GBs)
 				SET_ROPT(ropt_nset, D_MSK);
-				TOKENIZE_TWO(tkns, optarg, ",");
-				ATOI_S(img_w, tkns[0], endptr);
-				ATOI_S(img_h, tkns[1], endptr);
+				TOKENIZE_TWO(tkns, optarg, ",")
+				ATOI_S(img_w, tkns[0], endptr)
+				ATOI_S(img_h, tkns[1], endptr)
 				CHECK_RANGE(opt, img_w, MIN_W, MAX_W);
 				CHECK_RANGE(opt, img_h, MIN_H, MAX_H);
 				break;
 			case 'n':
 				SET_ROPT(ropt_nset, N_MSK);
-				ATOI_S(iter_n, optarg, endptr);
+				ATOI_S(iter_n, optarg, endptr)
 				CHECK_RANGE(opt, iter_n, MIN_N, MAX_N);
 				break;
 			case 'r':
@@ -175,11 +167,6 @@ int main(int argc, char* argv[argc]) {
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);
 				exit(EXIT_SUCCESS);
-			case 0:
-				if ( l_optind == 1 ) {
-					is_test = 1;
-				}
-				break;
 			case ':':
 				FAIL("%c requires argument(s)!\n", optopt);
 			case '?':
@@ -196,62 +183,45 @@ int main(int argc, char* argv[argc]) {
 			fprintf(stderr, "Option -d is required but was not set!\n");
 		}
 
-		if ( (ropt_nset & N_MSK) && !is_test ) {
+		if (ropt_nset & N_MSK) {
 			fprintf(stderr, "Option -n is required but was not set!\n");
 		}
-
-		if ( !is_test ) {
-			goto Lerr;
-		}
+        goto Lerr;
 	}
 
 	unsigned char* img;
 	if ( (img = malloc(img_w*BYTESPP * img_h*BYTESPP + sizeof (BMP_H)) ) == NULL)
 		goto Lerr;
 
-	printf("Caculating results\n");
-	//TODO more simple
-	if ( is_test ) {
-		for (size_t i = 0; i < img_w*img_h; i++) {
-			//img[i] = 0xff;
-			if ( i % 2 == 0 ) {
-				img[i] = 0xff;
-			} else {
-				img[i] = 0;
-			}
-		}
-	} else {
-		if (time_cap > 0) {
-			struct timespec start;
-			struct timespec end;
-
-			clock_gettime(CLOCK_MONOTONIC, &start);
-			for (unsigned long i = 0; i < (unsigned) time_cap; i++) {
-				bs[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
-			}
-			clock_gettime(CLOCK_MONOTONIC, &end);
-			
-			double time = end.tv_sec - start.tv_sec + 1e-9 * (end.tv_nsec - start.tv_nsec);
-			double avg_time = time / time_cap;
-
-			printf("Width: %ld Height: %ld Iterations: %d\nTime spent: %f Average Time spent: %f\n",
-					img_w, img_h, time_cap, time, avg_time);
-		} else {
-			bs[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
-		}
-	}
+    if (time_cap < 1) {
+        printf("Calculating results...\n");
+        burning_ship(s_val, img_w, img_h, pres, iter_n, img);
+    } else {
+        printf("Starting Benchmark...\n");
+        time_fn(burning_ship, (struct BS_Params) { // TODO catching errors -> free(img) ?
+                        .start = s_val,
+                        .width = img_w,
+                        .height = img_h,
+                        .res = pres,
+                        .n = iter_n,
+                        .img = img
+            }
+                , time_cap);
+    }
 
 	// FILE PATH for result
-	char* fpath = alloca(strlen(file_name)+1 + 2 + 4);
-	strncpy(fpath, "./", 3);
+	char* fpath = alloca(strlen(file_name) + DPATH_LEN + BMP_EXT_LEN + 1);
+	strncpy(fpath, "./", DPATH_LEN+1);
 	strncat(fpath, file_name, strlen(file_name)+1);
-	strncat(fpath, ".bmp", 5);
+	strncat(fpath, ".bmp", BMP_EXT_LEN+1);
 
 	// WRITING IMAGE DATA INTO FILE
-	printf("Writing image\n");
+	printf("Writing image...\n");
 	BMP_H bmph = creat_bmph(img_w, img_h);
-	if ( writef_bmp(img, fpath, bmph) < 0 ) //TODO
-		goto Lerr;
+	if ( writef_bmp(img, fpath, bmph) < 0 ) {
+        free(img);
+        goto Lerr;
+    }
 
 	free(img);
 	return EXIT_SUCCESS;

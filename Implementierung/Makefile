@@ -18,7 +18,7 @@ clean:
 	rm -r *.dSYM
 
 run:
-	./$(OUT) -h
+	./$(OUT)
 
 debug:
 	gdb $(OUT)
