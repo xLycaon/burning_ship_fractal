@@ -6,13 +6,6 @@
 #include <errno.h>
 #include <complex.h>
 
-#ifdef _WIN32
-#include <malloc.h>
-#define alloca(x) _alloca(x)
-#else
-#include <alloca.h>
-#endif
-
 #include "utils.h"
 #include "burning_ship.h"
 #include "timer.h"
@@ -102,7 +95,7 @@ int main(int argc, char* argv[argc]) {
 	float s_real, s_imag, pres;
 	float complex s_val;
 	unsigned long img_w, img_h;
-	char* file_name;
+	char file_name[FILENAME_MAX];
 
 	// DEFAULT VALUES for parameters
 	//impl_ind = 0;
@@ -112,7 +105,7 @@ int main(int argc, char* argv[argc]) {
 	s_val = 0.0;
 	img_w = 0;
 	img_h = 0;
-	file_name = "bs";
+    STRLCPY(file_name+DPATH_LEN, "bs", 4);
 
 	// Other parameters required for getopt
 	int opt, l_optind;
@@ -134,6 +127,7 @@ int main(int argc, char* argv[argc]) {
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
 			case 'V':
+                //TODO
 				//ATOI_S(impl_ind, optarg, endptr)
 				//CHECK_RANGE(opt, impl_ind, 0, ARRAY_SIZE (bs) - 1);
 				break;
@@ -163,6 +157,9 @@ int main(int argc, char* argv[argc]) {
 			case 'r':
 				ATOF_S(pres, optarg, endptr);
 				break;
+            case 'o':
+                STRLCPY(file_name+DPATH_LEN, optarg, FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
+                break;
 			case 'h':
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);
@@ -189,8 +186,9 @@ int main(int argc, char* argv[argc]) {
         goto Lerr;
 	}
 
+    //TODO important buffer overflow check due to inserted padding!!!
 	unsigned char* img;
-	if ( (img = malloc(img_w*BYTESPP * img_h*BYTESPP + sizeof (BMP_H)) ) == NULL)
+	if ( (img = malloc(img_w*BYTESPP * img_h*BYTESPP + sizeof (BMP_H)) ) == NULL) //TODO PADDING?
 		goto Lerr;
 
     if (time_cap < 1) {
@@ -210,15 +208,13 @@ int main(int argc, char* argv[argc]) {
     }
 
 	// FILE PATH for result
-	char* fpath = alloca(strlen(file_name) + DPATH_LEN + BMP_EXT_LEN + 1);
-	strncpy(fpath, "./", DPATH_LEN+1);
-	strncat(fpath, file_name, strlen(file_name)+1);
-	strncat(fpath, ".bmp", BMP_EXT_LEN+1);
+	memcpy(file_name, "./", DPATH_LEN);
+	strncat(file_name, ".bmp", BMP_EXT_LEN);
 
 	// WRITING IMAGE DATA INTO FILE
 	printf("Writing image...\n");
 	BMP_H bmph = creat_bmph(img_w, img_h);
-	if ( writef_bmp(img, fpath, bmph) < 0 ) {
+	if ( writef_bmp(img, file_name, bmph) < 0 ) {
         free(img);
         goto Lerr;
     }

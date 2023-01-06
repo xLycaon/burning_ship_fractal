@@ -2,13 +2,16 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/types.h>
 
-#define ARRAY_SIZE(arr) sizeof (arr) / sizeof (arr[0])
-
-#define MAGIC 0x424D 
+#define MAGIC 0x424D
 #define PAD_ALIGN 4
 #define BYTESPP 3 // 24 (bpp) / 8 (bits)
+
+#define STRLCPY(SRC, DEST, LEN) \
+strncpy((SRC), (DEST), (LEN)-1);      \
+(SRC)[(LEN)-1] = '\0' //TODO might not work with offsets
 
 typedef uint32_t uint32_2a __attribute__((__aligned__(2)));
 
