@@ -105,7 +105,7 @@ int main(int argc, char* argv[argc]) {
 	s_val = 0.0;
 	img_w = 0;
 	img_h = 0;
-    STRLCPY(file_name+DPATH_LEN, "bs", 4);
+    STRLCPY(file_name+DPATH_LEN, "bs", 2+DPATH_LEN);
 
 	// Other parameters required for getopt
 	int opt, l_optind;
@@ -186,9 +186,8 @@ int main(int argc, char* argv[argc]) {
         goto Lerr;
 	}
 
-    //TODO important buffer overflow check due to inserted padding!!!
 	unsigned char* img;
-	if ( (img = malloc(img_w*BYTESPP * img_h*BYTESPP + sizeof (BMP_H)) ) == NULL) //TODO PADDING?
+	if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H)) ) == NULL)
 		goto Lerr;
 
     if (time_cap < 1) {
@@ -212,7 +211,7 @@ int main(int argc, char* argv[argc]) {
 	strncat(file_name, ".bmp", BMP_EXT_LEN);
 
 	// WRITING IMAGE DATA INTO FILE
-	printf("Writing image...\n");
+	printf("Creating image file...\n");
 	BMP_H bmph = creat_bmph(img_w, img_h);
 	if ( writef_bmp(img, file_name, bmph) < 0 ) {
         free(img);

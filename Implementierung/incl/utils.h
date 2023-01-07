@@ -10,8 +10,16 @@
 #define BYTESPP 3 // 24 (bpp) / 8 (bits)
 
 #define STRLCPY(SRC, DEST, LEN) \
-strncpy((SRC), (DEST), (LEN)-1);      \
-(SRC)[(LEN)-1] = '\0' //TODO might not work with offsets
+strncpy((SRC), (DEST), (LEN)-1); \
+(SRC)[(LEN)-1] = '\0'
+
+//Padding is set to {0, 1, 2, 3}
+#define PADDING_(N) ( (PAD_ALIGN) - ((N)*BYTESPP % PAD_ALIGN) )
+#define BMP_ROW_PADDING(N) (PADDING_(N) % PAD_ALIGN ? PADDING_(N) : 0)
+// BMPDimension
+#define BMDIM(N) (N*BYTESPP)
+// BMPRowSize
+#define BMRS(N) (BMDIM(N)+BMP_ROW_PADDING(N))
 
 typedef uint32_t uint32_2a __attribute__((__aligned__(2)));
 

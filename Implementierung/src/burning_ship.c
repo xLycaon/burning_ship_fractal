@@ -60,7 +60,7 @@ void burning_ship(float complex start, size_t width, size_t height,
 
 			// COLORING PIXELS
 			unsigned char gscolor = scale_gscolor(i, n);
-			size_t index = w*BYTESPP + h * width*BYTESPP;
+			size_t index = BMDIM(w) + h * BMDIM(width);
 			img[index] = gscolor;
 			img[index + 1] = gscolor;
 			img[index + 2] = gscolor;
