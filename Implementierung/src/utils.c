@@ -19,12 +19,12 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) {
 
 	// Write BMP HEADER into file
 	written += fwrite((char *) &bmph, 1, sizeof (BMP_H), file);
-    if ( written != sizeof (BMP_H) ) {
-        fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the Header were able to be written!\n",
-                written, sizeof (BMP_H));
-    }
+    	if ( written != sizeof (BMP_H) ) {
+    	    fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the Header were able to be written!\n",
+    	            written, sizeof (BMP_H));
+    	}
 
-    unsigned char npad = BMP_ROW_PADDING(bmph.img_width);
+    	unsigned char npad = BMP_ROW_PADDING(bmph.img_width);
 	unsigned char zeros[npad];
 	memset(zeros, 0, npad);
 
@@ -33,10 +33,10 @@ writef_bmp(unsigned char* img, const char* path, BMP_H bmph) {
         written += fwrite(&(img[y * BMDIM(bmph.img_width)]), 1, BMDIM(bmph.img_width), file);
 		written += fwrite(zeros, 1, npad, file); // ROW PADDING
 	}
-    if ( written != bmph.fsize ) { //TODO
-        fprintf(stderr, "WARNING: ONLY %lu/%u BYTES were able to be written in total!\n",
-                written, bmph.fsize);
-    }
+    	if ( written != bmph.fsize ) { //TODO
+    	    fprintf(stderr, "WARNING: ONLY %lu/%u BYTES were able to be written in total!\n",
+    	            written, bmph.fsize);
+    	}
 
 	fclose(file);
 	return written;

@@ -117,11 +117,11 @@ int main(int argc, char* argv[argc]) {
 	};
 
 	// List of burning_ship implementations
-    /*
+    	/*
 	const bs_impl bs[] = {
 		burning_ship
 	};
-     */
+     	*/
 
 	// UPDATES DEFAULT PARAMETERS
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
@@ -157,9 +157,9 @@ int main(int argc, char* argv[argc]) {
 			case 'r':
 				ATOF_S(pres, optarg, endptr);
 				break;
-            case 'o':
-                STRLCPY(file_name+DPATH_LEN, optarg, FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
-                break;
+            		case 'o':
+            		    STRLCPY(file_name+DPATH_LEN, optarg, FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
+            		    break;
 			case 'h':
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);

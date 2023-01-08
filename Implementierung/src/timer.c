@@ -65,12 +65,14 @@ void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
 
     printf("BENCHMARK: Image of width %lu and height %lu generated %u times.\n",
            params.width, params.height, n);
-    printf("AVERAGE: %E s.\n",
-           to_secs(cum) / n);
-    printf("MIN: %E s.\n",
-           to_secs(min));
-    printf("MAX: %E s.\n",
-           to_secs(max));
-    printf("TOTAL: %E S.\n",
+    printf("CUMULATED: %E S.\n",
            to_secs(cum));
+    if (n > 1) {
+        printf("AVERAGE: %E s.\n",
+               to_secs(cum) / n);
+        printf("MIN: %E s.\n",
+               to_secs(min));
+        printf("MAX: %E s.\n",
+               to_secs(max));
+    }
 }

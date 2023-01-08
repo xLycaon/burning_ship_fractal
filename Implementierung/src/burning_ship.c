@@ -5,33 +5,36 @@
 #include "burning_ship.h"
 #include "utils.h" //TODO BYTESPP
 
+//TODO scaling
 #define SCALEX 2.5f
 #define SCALEY 2.5f
-#define SCOFFX 1
-#define SCOFFY 1
-#define LIMIT 100
+#define SCOFFX 1.0f
+#define SCOFFY 1.0f
+#define LIMIT 10000
 
+// [0, 1]
 static inline float
-scale_coordx(float x, size_t width) {
-	return -SCALEX + (SCALEX+SCOFFX) * (x / (float) width);
+scale_coordx(float x, size_t width, float res) {
+	return -SCALEX+ (SCALEX+SCOFFX) * (x / (float) width);
 }
 
 static inline float
-scale_coordy(float y, size_t height) {
+scale_coordy(float y, size_t height, float res) {
 	return -SCALEY + (SCALEY+SCOFFY) * (y / (float) height);
 }
 
-//TODO using floating points is bad here
 //TODO better color conversion
+//TODO too lisp like
 static unsigned char
 scale_gscolor(unsigned iter_n, unsigned n) {
-	return 0xFF - ((0xFF * (iter_n % n+1)) / n);
+	return (unsigned char) (((float) 0xFF) - ( ((float) 0xFF) * ( (float) (iter_n % (n+1)) / (float) n )));
 }
 
 // c = cr + I * ci
 // Z(n+1) = (|Re(Z(n))| + I * |Imag(Z(n))|)^2 + c = (|zr| + I * |zi|)^2 + (cr + I * ci)
 // Re(Z(n+1)) = (zr)^2 - (zi)^2 + cr
 // Img(Z(n+1)) = 2|zr||zi| + ci = 2|zrzi| + ci
+//TODO scaling
 void burning_ship(float complex start, size_t width, size_t height,
 		  float res, unsigned n, unsigned char* img)
 {
@@ -48,8 +51,8 @@ void burning_ship(float complex start, size_t width, size_t height,
 
 			// cr := x-coord + offset
 			// ci := y-coord + offset
-			cr = scale_coordx(w, width) + creal(start);
-			ci = scale_coordy(h, height) + cimag(start);
+			cr = scale_coordx(w, width, res) + creal(start);
+			ci = scale_coordy(h, height, res) + cimag(start);
 
 			unsigned i = 0;
 			for (; i < n && zr*zr + zi*zi <= LIMIT; i++) {
@@ -59,11 +62,11 @@ void burning_ship(float complex start, size_t width, size_t height,
 			}
 
 			// COLORING PIXELS
-			unsigned char gscolor = scale_gscolor(i, n);
-			size_t index = BMDIM(w) + h * BMDIM(width);
-			img[index] = gscolor;
-			img[index + 1] = gscolor;
-			img[index + 2] = gscolor;
+            unsigned char gscolor = scale_gscolor(i, n);
+            size_t index = BMDIM(w) + h * BMDIM(width);
+            img[index] = gscolor;
+            img[index + 1] = gscolor;
+            img[index + 2] = gscolor;
 		}
 	}
 }
