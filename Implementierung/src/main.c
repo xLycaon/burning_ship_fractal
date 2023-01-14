@@ -88,23 +88,25 @@ if ( VAL < MIN_V || VAL > MAX_V ) { \
 } 
 */
 
+//TODO limit range of s_val and pres
 int main(int argc, char* argv[argc]) {
 
 	// DEFAULT parameters
-	int /*impl_ind,*/ time_cap, iter_n;
+    unsigned impl_ind;
+	int time_cap, iter_n;
 	float s_real, s_imag, pres;
 	float complex s_val;
 	unsigned long img_w, img_h;
 	char file_name[FILENAME_MAX];
 
 	// DEFAULT VALUES for parameters
-	//impl_ind = 0;
+	impl_ind = 0;
 	time_cap = -1;
 	iter_n = 0;
 	pres = 1.0f;
 	s_val = 0.0;
-	img_w = 0;
-	img_h = 0;
+	img_w = 100; //TODO Range check
+	img_h = 100; //TODO Range check
     STRLCPY(file_name+DPATH_LEN, "bs", 2+DPATH_LEN);
 
 	// Other parameters required for getopt
@@ -117,19 +119,18 @@ int main(int argc, char* argv[argc]) {
 	};
 
 	// List of burning_ship implementations
-    	/*
-	const bs_impl bs[] = {
+	const burning_ship_t burning_ship_impl[] = {
 		burning_ship
+        //,burning_ship_V1
 	};
-     	*/
 
 	// UPDATES DEFAULT PARAMETERS
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
 			case 'V':
                 //TODO
-				//ATOI_S(impl_ind, optarg, endptr)
-				//CHECK_RANGE(opt, impl_ind, 0, ARRAY_SIZE (bs) - 1);
+				ATOI_S(impl_ind, optarg, endptr)
+				CHECK_RANGE(opt, impl_ind, 0, sizeof bs / sizeof bs[0]);
 				break;
 			case 'B':
 				ATOI_S(time_cap, optarg, endptr);
@@ -157,9 +158,9 @@ int main(int argc, char* argv[argc]) {
 			case 'r':
 				ATOF_S(pres, optarg, endptr);
 				break;
-            		case 'o':
-            		    STRLCPY(file_name+DPATH_LEN, optarg, FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
-            		    break;
+            case 'o':
+                STRLCPY(file_name+DPATH_LEN, optarg, FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
+                break;
 			case 'h':
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);
@@ -171,10 +172,12 @@ int main(int argc, char* argv[argc]) {
 		}
 	}
 
+    // Checks if program arguments are only options
 	if ( optind != argc ) {
 		FAIL("No paramters other than options are allowed\n");
 	}
 
+    // Checks if required options are set
 	if ( ropt_nset ) {
 		if ( ropt_nset & D_MSK ) {
 			fprintf(stderr, "Option -d is required but was not set!\n");
@@ -186,16 +189,18 @@ int main(int argc, char* argv[argc]) {
         goto Lerr;
 	}
 
+    // Allocates memory to the final size of the .bmp output file
 	unsigned char* img;
-	if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H)) ) == NULL)
+    if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof BW_CTB) ) == NULL)
 		goto Lerr;
 
+    // Check if Benchmark is going to be runned.
     if (time_cap < 1) {
         printf("Calculating results...\n");
-        burning_ship(s_val, img_w, img_h, pres, iter_n, img);
+        burning_ship_impl[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
     } else {
         printf("Starting Benchmark...\n");
-        time_fn(burning_ship, (struct BS_Params) { // TODO catching errors -> free(img) ?
+        time_fn(burning_ship_impl[impl_ind], (struct BS_Params) { // TODO catching errors -> free(img) ?
                         .start = s_val,
                         .width = img_w,
                         .height = img_h,
@@ -212,8 +217,7 @@ int main(int argc, char* argv[argc]) {
 
 	// WRITING IMAGE DATA INTO FILE
 	printf("Creating image file...\n");
-	BMP_H bmph = creat_bmph(img_w, img_h);
-	if ( writef_bmp(img, file_name, bmph) < 0 ) {
+	if ( writef_bmp(img, file_name, (struct DIM) {.width = img_w, .height = img_h} ) < 0 ) {
         free(img);
         goto Lerr;
     }

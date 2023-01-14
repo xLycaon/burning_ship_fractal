@@ -5,9 +5,10 @@
 #include <string.h>
 #include <sys/types.h>
 
-#define MAGIC 0x424D
+//#define MAGIC 0x424d
+#define MAGIC 0x4d42
 #define PAD_ALIGN 4
-#define BYTESPP 3 // 24 (bpp) / 8 (bits)
+#define BYTESPP 1/*3*/ // 24 (bpp) / 8 (bits)
 
 #define STRLCPY(SRC, DEST, LEN) \
 strncpy((SRC), (DEST), (LEN)-1); \
@@ -16,14 +17,18 @@ strncpy((SRC), (DEST), (LEN)-1); \
 //Padding is set to {0, 1, 2, 3}
 #define PADDING_(N) ( (PAD_ALIGN) - ((N)*BYTESPP % PAD_ALIGN) )
 #define BMP_ROW_PADDING(N) (PADDING_(N) % PAD_ALIGN ? PADDING_(N) : 0)
-// BMPDimension
-#define BMDIM(N) (N*BYTESPP)
-// BMPRowSize
+
+// BMpDIMension
+#define BMDIM(N) ((N)*BYTESPP)
+
+// BMpRowSize
 #define BMRS(N) (BMDIM(N)+BMP_ROW_PADDING(N))
 
 typedef uint32_t uint32_2a __attribute__((__aligned__(2)));
 
-// Mapping of BMP format which is 54 bytes long
+// Mapping of BMP format which is 54 bytes long.
+// Each member of the struct is aligned on a 2 byte boundary
+// to guarantee a consistent total size of 54 bytes.
 typedef struct {
 	uint16_t magic;
 	uint32_2a fsize;
@@ -42,9 +47,29 @@ typedef struct {
 	uint32_2a important_colors;
 } BMP_H;
 
+typedef struct COLOR {
+    uint8_t r;
+    uint8_t b;
+    uint8_t g;
+    uint8_t reserved;
+} color_t;
+
+#define TOTAL_COLORS 2
+#define IMPORTANT_COLORS 2
+
+struct COLOR_TB {
+    color_t entry[IMPORTANT_COLORS];
+};
+
+extern const struct COLOR_TB BW_CTB;
+
+struct DIM { //TODO
+    size_t width;
+    size_t height;
+};
+
+// Creates a new .bmp file with name as in path by:
+// 1) Writing the BITMAP header (bmph) in correct order first.
+// 2) Writing IMAGE DATA accordingly.
 ssize_t
-writef_bmp(unsigned char* img, const char* path, BMP_H bmph);
-
-BMP_H
-creat_bmph(size_t img_w, size_t img_h);
-
+writef_bmp(unsigned char* img, const char* path, struct DIM dim);

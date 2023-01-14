@@ -1,5 +1,5 @@
 CC = gcc-12
-CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L
+CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L -fno-omit-frame-pointer
 SRCDIR = src
 INCLDIR = incl
 OUT = prog
@@ -18,7 +18,7 @@ clean:
 	rm -r *.dSYM
 
 run:
-	./$(OUT)
+	./$(OUT) -h
 
 debug:
 	gdb $(OUT)

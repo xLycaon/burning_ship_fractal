@@ -56,10 +56,10 @@ void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
         clock_gettime(CLOCK_MONOTONIC, &end);
 
         ts_sub(end, start, &run);
-        ts_add(cum, run, &cum); //TODO check
-        if (ts_cmp(min, run) > 0) //TODO check
+        ts_add(cum, run, &cum);
+        if (ts_cmp(min, run) > 0)
             min = run;
-        if (ts_cmp(max, run) < 0) //TODO check
+        if (ts_cmp(max, run) < 0)
             max = run;
     }
 
