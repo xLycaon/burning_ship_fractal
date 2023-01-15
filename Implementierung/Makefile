@@ -1,5 +1,5 @@
 CC = gcc-12
-CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L -fno-omit-frame-pointer
+CFLAGS = -O0 -std=c17 -Wall -Wextra -Wpedantic -g -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L -msse4.2
 SRCDIR = src
 INCLDIR = incl
 OUT = prog

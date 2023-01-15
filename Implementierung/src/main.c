@@ -121,7 +121,7 @@ int main(int argc, char* argv[argc]) {
 	// List of burning_ship implementations
 	const burning_ship_t burning_ship_impl[] = {
 		burning_ship
-        //,burning_ship_V1
+        ,burning_ship_V1
 	};
 
 	// UPDATES DEFAULT PARAMETERS
