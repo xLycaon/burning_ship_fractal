@@ -12,11 +12,11 @@ const struct COLOR_TB BW_CTB = {
 };
 
 const struct COLOR_TB BGW_CTB = {
-        .entry[4] = {31, 31, 31, 0},
-        .entry[3] = {84, 84, 84, 0},
-		.entry[2] = {137, 137, 137, 0},
-		.entry[1] = {189, 190, 190, 0},
-		.entry[0] = {242, 243, 243, 0},
+    		.entry[0] = {242, 243, 243, 0},
+            .entry[1] = {189, 190, 190, 0},
+    		.entry[2] = {137, 137, 137, 0},      
+            .entry[3] = {84, 84, 84, 0},
+            .entry[4] = {31, 31, 31, 0},
 };
 
 static inline BMP_H creat_bmph(struct DIM dim) {

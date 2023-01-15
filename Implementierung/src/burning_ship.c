@@ -10,6 +10,7 @@
 #define SCALEFACT (2.0f)
 #define SCALERES(X, SIZE, RES) ((float) ((-((float) RES) + SCALEFACT * ((float) RES)) * ((float) X / (float) SIZE)))
 #define BW_CLR(ITER, N) ( (ITER) > (N)/2 ? 0x00 : 0xff )
+#define SCALE_CLR(ITER, N) ( (unsigned char) ((float)ITER/(float)N * (TOTAL_COLORS-1)) )
 
 // TODO too expensive?
 #define SCALERES_PS(X, L, RES, C) (_mm_setr_ps( \
