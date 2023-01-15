@@ -48,13 +48,13 @@ typedef struct {
 } BMP_H;
 
 typedef struct COLOR {
-    uint8_t r;
     uint8_t b;
     uint8_t g;
+    uint8_t r;
     uint8_t reserved;
 } color_t;
 
-#define TOTAL_COLORS 5
+#define TOTAL_COLORS 16
 #define IMPORTANT_COLORS 0 // 0 means all colors are important
 
 struct COLOR_TB {

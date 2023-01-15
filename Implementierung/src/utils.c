@@ -19,6 +19,64 @@ const struct COLOR_TB BGW_CTB = {
             .entry[4] = {31, 31, 31, 0},
 };
 
+
+const struct COLOR_TB BGW_EXTENDED_CTB = {
+    		.entry[0] = {0xff, 0xff, 0xff, 0},
+            .entry[1] = {0xee, 0xee, 0xee, 0},
+            .entry[2] = {0xdd, 0xdd, 0xdd, 0},
+            .entry[3] = {0xcc, 0xcc, 0xcc, 0},
+            .entry[4] = {0xbb, 0xbb, 0xbb, 0},
+            .entry[5] = {0xaa, 0xaa, 0xaa, 0},
+            .entry[6] = {0x99, 0x99, 0x99, 0},
+            .entry[7] = {0x88, 0x88, 0x88, 0},
+            .entry[8] = {0x77, 0x77, 0x77, 0},
+            .entry[9] = {0x66, 0x66, 0x66, 0},
+            .entry[10] = {0x55, 0x55, 0x55, 0},
+            .entry[11] = {0x44, 0x44, 0x44, 0},
+            .entry[12] = {0x33, 0x33, 0x33, 0},
+            .entry[13] = {0x22, 0x22, 0x22, 0},
+            .entry[14] = {0x11, 0x11, 0x11, 0},
+            .entry[15] = {0x00, 0x00, 0x00, 0}
+};
+
+const struct COLOR_TB RB_EXTENDED_CTB = {
+    		.entry[0] = {0xff, 0x00, 0x00, 0},
+            .entry[1] = {0xee, 0x00, 0x11, 0},
+            .entry[2] = {0xdd, 0x00, 0x22, 0},
+            .entry[3] = {0xcc, 0x00, 0x33, 0},
+            .entry[4] = {0xbb, 0x00, 0x44, 0},
+            .entry[5] = {0xaa, 0x00, 0x55, 0},
+            .entry[6] = {0x99, 0x00, 0x66, 0},
+            .entry[7] = {0x88, 0x00, 0x77, 0},
+            .entry[8] = {0x77, 0x00, 0x88, 0},
+            .entry[9] = {0x66, 0x00, 0x99, 0},
+            .entry[10] = {0x55, 0x00, 0xaa, 0},
+            .entry[11] = {0x44, 0x00, 0xbb, 0},
+            .entry[12] = {0x33, 0x00, 0xcc, 0},
+            .entry[13] = {0x22, 0x00, 0xdd, 0},
+            .entry[14] = {0x11, 0x00, 0xee, 0},
+            .entry[15] = {0x00, 0x00, 0xff, 0}
+};
+
+const struct COLOR_TB FIRE_CTB = {
+    		.entry[0] = {0x00, 0x44, 0xff, 0},
+            .entry[1] = {0x00, 0x51, 0xff, 0},
+            .entry[2] = {0x00, 0x5e, 0xfe, 0},
+            .entry[3] = {0x00, 0x6b, 0xfe, 0},
+            .entry[4] = {0x00, 0x78, 0xfe, 0},
+            .entry[5] = {0x00, 0x85, 0xfd, 0},
+            .entry[6] = {0x00, 0x92, 0xfd, 0},
+            .entry[7] = {0x00, 0x9f, 0xfd, 0},
+            .entry[8] = {0x00, 0xac, 0xfc, 0},
+            .entry[9] = {0x00, 0xb9, 0xfc, 0},
+            .entry[10] = {0x00, 0xc6, 0xfb, 0},
+            .entry[11] = {0x00, 0xd3, 0xfb, 0},
+            .entry[12] = {0x00, 0xe0, 0xfb, 0},
+            .entry[13] = {0x00, 0xed, 0xfa, 0},
+            .entry[14] = {0x00, 0xfa, 0xfa, 0},
+            .entry[15] = {0x00, 0x00, 0x00, 0}
+};
+
 static inline BMP_H creat_bmph(struct DIM dim) {
     BMP_H bmp;
     bmp.magic = MAGIC;
@@ -56,10 +114,10 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 	}
 
     // Write COLOR TABLE into file
-    written += fwrite(&BGW_CTB, sizeof (char), sizeof BGW_CTB, file);
-    if ( written != sizeof (BMP_H) + sizeof BW_CTB ) {
+    written += fwrite(&FIRE_CTB, sizeof (char), sizeof FIRE_CTB, file);
+    if ( written != sizeof (BMP_H) + sizeof FIRE_CTB ) {
         fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the COLOR TABLE were able to be written!\n",
-                written - sizeof (BMP_H), sizeof BGW_CTB);
+                written - sizeof (BMP_H), sizeof FIRE_CTB);
     }
 
     // PADDING MEM
