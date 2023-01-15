@@ -11,12 +11,20 @@ const struct COLOR_TB BW_CTB = {
         .entry[1] = {0xff, 0xff, 0xff, 0}
 };
 
+const struct COLOR_TB BGW_CTB = {
+        .entry[4] = {31, 31, 31, 0},
+        .entry[3] = {84, 84, 84, 0},
+		.entry[2] = {137, 137, 137, 0},
+		.entry[1] = {189, 190, 190, 0},
+		.entry[0] = {242, 243, 243, 0},
+};
+
 static inline BMP_H creat_bmph(struct DIM dim) {
     BMP_H bmp;
     bmp.magic = MAGIC;
-    bmp.fsize = BMRS(dim.width) * dim.height + sizeof (BMP_H) + sizeof BW_CTB;
+    bmp.fsize = BMRS(dim.width) * dim.height + sizeof (BMP_H) + sizeof BGW_CTB;
     bmp.reserved = 0;
-    bmp.dib_offset = sizeof (BMP_H) + sizeof BW_CTB;
+    bmp.dib_offset = sizeof (BMP_H) + sizeof BGW_CTB;
     bmp.header_size = sizeof (BMP_H) - 14;
     bmp.img_width = dim.width;
     bmp.img_height = dim.height;
@@ -48,10 +56,10 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 	}
 
     // Write COLOR TABLE into file
-    written += fwrite(&BW_CTB, sizeof (char), sizeof BW_CTB, file);
+    written += fwrite(&BGW_CTB, sizeof (char), sizeof BGW_CTB, file);
     if ( written != sizeof (BMP_H) + sizeof BW_CTB ) {
         fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the COLOR TABLE were able to be written!\n",
-                written - sizeof (BMP_H), sizeof BW_CTB);
+                written - sizeof (BMP_H), sizeof BGW_CTB);
     }
 
     // PADDING MEM

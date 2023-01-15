@@ -54,14 +54,17 @@ typedef struct COLOR {
     uint8_t reserved;
 } color_t;
 
-#define TOTAL_COLORS 2
-#define IMPORTANT_COLORS 2
+#define TOTAL_COLORS 5
+#define IMPORTANT_COLORS 0 // 0 means all colors are important
 
 struct COLOR_TB {
-    color_t entry[IMPORTANT_COLORS];
+    color_t entry[TOTAL_COLORS];
 };
 
 extern const struct COLOR_TB BW_CTB;
+
+extern const struct COLOR_TB BGW_CTB;
+
 
 struct DIM { //TODO
     size_t width;

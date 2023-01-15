@@ -9,6 +9,8 @@
 #define SCALERES(X, SIZE, RES) ((float) ((-((float) RES) + SCALEFACT * ((float) RES)) * ((float) X / (float) SIZE)))
 #define BW_CLR(ITER, N) ( (ITER) > (N)/2 ? 0x00 : 0xff )
 
+#define SCALE_CLR(ITER, N) ( (unsigned char) ((float)ITER / (float)N * ((float)TOTAL_COLORS-1)) )
+
 // We can show that lim sup n -> ∞ |zn| ≤ 2
 // Therefore zr^2 + zi^2 ≤ 4
 #define LIMIT 4
@@ -47,7 +49,7 @@ void burning_ship(float complex start, size_t width, size_t height,
 			}
 
             size_t index = BMDIM(w) + h * BMDIM(width);
-            img[index] = BW_CLR(i, n);
+            img[index] = SCALE_CLR(i, n);
 		}
 	}
 }
