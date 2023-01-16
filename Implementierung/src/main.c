@@ -54,13 +54,14 @@
 /* redefinitions for atoi from stdlib.h */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
+//TODO
 #define ATOT_S(VAR, ARG, ENDPTR, T) \
 errno = 0; \
 VAR = T; \
 if ( *ENDPTR != '\0' ) { \
-	FAIL("%c is not a digit!\n", *ENDPTR); \
+	FAIL("%c could not be converted!\n", *ENDPTR); \
 } else if ( errno != 0 ) { \
-	perror("OVERFLOW ERROR"); \
+	perror("OVER-/UNDERFLOW ERROR"); \
 	FAIL_E(); \
 }
 

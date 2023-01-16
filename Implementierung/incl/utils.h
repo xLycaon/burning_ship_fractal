@@ -65,11 +65,6 @@ struct COLOR_TB2 {
     color_t entry[2];
 };
 
-extern const struct COLOR_TB2 BW_CTB;
-
-extern const struct COLOR_TB16 BGW_CTB;
-
-
 struct DIM { //TODO
     size_t width;
     size_t height;
