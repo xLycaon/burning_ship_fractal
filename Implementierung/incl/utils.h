@@ -57,13 +57,17 @@ typedef struct COLOR {
 #define TOTAL_COLORS 16
 #define IMPORTANT_COLORS 0 // 0 means all colors are important
 
-struct COLOR_TB {
-    color_t entry[TOTAL_COLORS];
+struct COLOR_TB16 {
+    color_t entry[16];
 };
 
-extern const struct COLOR_TB BW_CTB;
+struct COLOR_TB2 {
+    color_t entry[2];
+};
 
-extern const struct COLOR_TB BGW_CTB;
+extern const struct COLOR_TB2 BW_CTB;
+
+extern const struct COLOR_TB16 BGW_CTB;
 
 
 struct DIM { //TODO

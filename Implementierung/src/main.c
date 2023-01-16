@@ -191,7 +191,7 @@ int main(int argc, char* argv[argc]) {
 
     // Allocates memory to the final size of the .bmp output file
 	unsigned char* img;
-    if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof BW_CTB) ) == NULL)
+    if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof (struct COLOR_TB16)) ) == NULL)
 		goto Lerr;
 
     // Check if Benchmark is going to be runned.

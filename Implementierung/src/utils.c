@@ -6,21 +6,23 @@
 //TODO
 #define WARN(W, E, N) ("WARNING: Only "#W" out of "#E" bytes were able to be written in TOTAL ("#N")!")
 
-const struct COLOR_TB BW_CTB = {
-        .entry[0] = {0, 0, 0, 0},
-        .entry[1] = {0xff, 0xff, 0xff, 0}
+const struct COLOR_TB2 BW_CTB = {
+        .entry[1] = {0xff, 0xff, 0xff, 0},
+        .entry[0] = {0, 0, 0, 0}
 };
 
-const struct COLOR_TB BGW_CTB = {
-    		.entry[0] = {242, 243, 243, 0},
-            .entry[1] = {189, 190, 190, 0},
-    		.entry[2] = {137, 137, 137, 0},      
-            .entry[3] = {84, 84, 84, 0},
-            .entry[4] = {31, 31, 31, 0},
+/*
+const struct COLOR_TB16 BGW_CTB = { // TODO möglicherweise zu Grob
+        .entry[0] = {0xff, 0xff, 0xff, 0xff},
+        .entry[1] = {242, 243, 243, 0},
+        .entry[2] = {189, 190, 190, 0},
+        .entry[3] = {137, 137, 137, 0},
+        .entry[4] = {84, 84, 84, 0},
+        .entry[5] = {31, 31, 31, 0}
 };
+ */
 
-
-const struct COLOR_TB BGW_EXTENDED_CTB = {
+const struct COLOR_TB16 BGW_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0xff, 0xff, 0},
             .entry[1] = {0xee, 0xee, 0xee, 0},
             .entry[2] = {0xdd, 0xdd, 0xdd, 0},
@@ -39,7 +41,7 @@ const struct COLOR_TB BGW_EXTENDED_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
-const struct COLOR_TB RB_EXTENDED_CTB = {
+const struct COLOR_TB16 RB_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0x00, 0x00, 0},
             .entry[1] = {0xee, 0x00, 0x11, 0},
             .entry[2] = {0xdd, 0x00, 0x22, 0},
@@ -58,7 +60,7 @@ const struct COLOR_TB RB_EXTENDED_CTB = {
             .entry[15] = {0x00, 0x00, 0xff, 0}
 };
 
-const struct COLOR_TB FIRE_CTB = {
+const struct COLOR_TB16 FIRE_CTB = {
     		.entry[0] = {0x00, 0x44, 0xff, 0},
             .entry[1] = {0x00, 0x51, 0xff, 0},
             .entry[2] = {0x00, 0x5e, 0xfe, 0},
@@ -80,9 +82,9 @@ const struct COLOR_TB FIRE_CTB = {
 static inline BMP_H creat_bmph(struct DIM dim) {
     BMP_H bmp;
     bmp.magic = MAGIC;
-    bmp.fsize = BMRS(dim.width) * dim.height + sizeof (BMP_H) + sizeof BGW_CTB;
+    bmp.fsize = BMRS(dim.width) * dim.height + sizeof (BMP_H) + sizeof (struct COLOR_TB16);
     bmp.reserved = 0;
-    bmp.dib_offset = sizeof (BMP_H) + sizeof BGW_CTB;
+    bmp.dib_offset = sizeof (BMP_H) + sizeof (struct COLOR_TB16);
     bmp.header_size = sizeof (BMP_H) - 14;
     bmp.img_width = dim.width;
     bmp.img_height = dim.height;
@@ -114,10 +116,10 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 	}
 
     // Write COLOR TABLE into file
-    written += fwrite(&FIRE_CTB, sizeof (char), sizeof FIRE_CTB, file);
-    if ( written != sizeof (BMP_H) + sizeof FIRE_CTB ) {
+    written += fwrite(&BGW_EXTENDED_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
+    if ( written != sizeof (BMP_H) + sizeof (struct COLOR_TB16) ) {
         fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the COLOR TABLE were able to be written!\n",
-                written - sizeof (BMP_H), sizeof FIRE_CTB);
+                written - sizeof (BMP_H), sizeof (struct COLOR_TB16));
     }
 
     // PADDING MEM

@@ -30,7 +30,7 @@
 // (0, 0, 0, x) (0, 0, 0, y) | (0, 0, 0, m) (0, 0, 0, n) -> (0) (0) | (0) (x, y, m, n)
 #define HLH_LLH_LHL_MSK (0x0C080400) //TODO
 
-// Preserves a chunk (.) -> (.)
+// Sets a chunk to zero (.) -> (0)
 #define PRS_MSK (0x80808080)
 
 // We can show that lim sup n -> ∞ |zn| ≤ 2
@@ -89,7 +89,7 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
 
     __m128 abs_msk = _mm_set1_ps(-0.0f);
     __m128 two = _mm_set1_ps(2.0f);
-    __m128 limit = _mm_set1_ps(4.0f);
+    __m128 limit = _mm_set1_ps(LIMIT);
     __m128i mv2lo32msk = _mm_set_epi32((int) PRS_MSK,
                                        (int) PRS_MSK,
                                        (int) PRS_MSK,
@@ -154,70 +154,6 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
                                            ifour);
             pvals = _mm_shuffle_epi8(pvals, mv2lo32msk); //TODO
             _mm_storeu_si32((__m128i_u *) &img[index], pvals);
-        }
-    }
-}
-//Optimised SIMD with __m128d vector type, test, not sure if it's allowed
-void burning_ship_V2(float complex start, size_t width, size_t height,
-                     float res, unsigned n, unsigned char* img){
-    __m128d zr, zi, cr, ci;
-    __m128d limit = _mm_set1_pd(LIMIT);
-
-    for (size_t h = 0; h < height; h++) {
-        ci = _mm_set1_pd(SCALERES(h, height, res) + s_ci);
-
-        for (size_t w = 0; w < width; w += 2) {
-            cr = _mm_add_pd(_mm_set_pd(SCALERES(w + 1, width, res) + s_cr, SCALERES(w, width, res) + s_cr), ci);
-            zr = _mm_setzero_pd();
-            zi = _mm_setzero_pd();
-
-            unsigned i = 0;
-            for (; i < n; i++) {
-                __m128d zr_tmp = _mm_sub_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
-                zi = _mm_add_pd(_mm_mul_pd(_mm_set1_pd(2.0), _mm_mul_pd(zr, zi)), ci);
-                zr = _mm_add_pd(zr_tmp, cr);
-
-                __m128d cmp = _mm_cmpgt_pd(_mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi)), limit);
-                if (_mm_movemask_pd(cmp) == 0x3) break;
-            }
-
-            for (size_t j = 0; j < 2; j++) {
-                size_t index = BMDIM(w + j) + h * BMDIM(width);
-                img[index] = BW_CLR(i, n);
-            }
-        }
-    }
-}
-//This version improves cache performance, uses pragma to parallelize the execution of the outer loop, which can significantly improve performance on multi-core processors.
-void burning_ship_V2_1(float complex start, size_t width, size_t height,
-                       float res, unsigned n, unsigned char* img){
-    __m128d zr, zi, cr, ci;
-    __m128d limit = _mm_set1_pd(LIMIT);
-    __m128d two = _mm_set1_pd(2.0);
-
-#pragma omp parallel for schedule(dynamic)
-    for (size_t h = 0; h < height; h++) {
-        ci = _mm_set1_pd(SCALERES(h, height, res) + s_ci);
-
-        for (size_t w = 0; w < width; w += 2) {
-            cr = _mm_add_pd(_mm_set_pd(SCALERES(w + 1, width, res) + s_cr, SCALERES(w, width, res) + s_cr), ci);
-            zr = _mm_setzero_pd();
-            zi = _mm_setzero_pd();
-
-            unsigned i = 0;
-            for (; i < n; i++) {
-                __m128d zr_tmp = _mm_sub_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
-                zi = _mm_add_pd(_mm_mul_pd(two, _mm_mul_pd(zr, zi)), ci);
-                zr = _mm_add_pd(zr_tmp, cr);
-
-                __m128d cmp = _mm_cmpgt_pd(_mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi)), limit);
-                if (_mm_movemask_pd(cmp) == 0x3) break;
-            }
-            for (size_t j = 0; j < 2; j++) {
-                size_t index = BMDIM(w + j) + h * BMDIM(width);
-                __builtin_prefetch(img + index);
-                img[index] = BW_CLR(i, n);
-            }
         }
     }
 }
