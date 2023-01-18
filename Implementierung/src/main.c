@@ -89,6 +89,9 @@ if ( VAL < MIN_V || VAL > MAX_V ) { \
 } 
 */
 
+static void check_range() {
+}
+
 //TODO limit range of s_val and pres
 int main(int argc, char* argv[argc]) {
 

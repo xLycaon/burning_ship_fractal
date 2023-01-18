@@ -1,5 +1,5 @@
 CC = gcc-12
-CFLAGS = -O3 -std=c17 -Wall -Wextra -Wpedantic -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L -msse4.2
+CFLAGS = -O0 -g -std=c17 -Wall -Wextra -Wpedantic -I$(INCLDIR) -D_POSIX_C_SOURCE=200809L -msse4.2
 SRCDIR = src
 INCLDIR = incl
 OUT = prog

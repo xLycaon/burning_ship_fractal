@@ -109,6 +109,7 @@ static inline void burning_ship_step(size_t index, float cr, float ci, unsigned 
     img[index] = SCALE_CLR(i, n);
 }
 
+//TODO incorrect results when width is not a multiple of 4
 void burning_ship_V1(float complex start, size_t width, size_t height,
                      float res, unsigned n, unsigned char* img) {
     float s_ci = cimagf(start);
@@ -164,11 +165,13 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
             _mm_storeu_si32((__m128i_u *) (img + index), pvals);
         }
 
+        //TODO
         for (; w < width; w++)
             burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
     }
 }
 
+//TODO incorrect results if width is not a multiple of 16
 void burning_ship_V2(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img)
 {
@@ -200,6 +203,7 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
 
     size_t index = 0;
 
+    // TODO precalculate cr and ci ?
     for (size_t h = 0; h < height; h++) {
 
         __m128 ci = _mm_set1_ps(SCALERES(h, height, res) + s_ci);
@@ -207,16 +211,20 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
         size_t w = 0;
         for (; w < HEX_DIV(width); w+=PSTEP16) {
 
-            __m128 cr = SCALERES_PS(w, width, res, s_cr);
+            //TODO
+            __m128 cr[VEC_COUNT] = {
+                    SCALERES_PS(w, width, res, s_cr),
+                    SCALERES_PS(w+VEC_COUNT, width, res, s_cr),
+                    SCALERES_PS(w+VEC_COUNT*2, width, res, s_cr),
+                    SCALERES_PS(w+VEC_COUNT*3, width, res, s_cr)
+            };
 
             __m128 zr[VEC_COUNT] = {0};
             __m128 zi[VEC_COUNT] = {0};
 
-            //TODO expensive?
             __m128 ngt_lim[VEC_COUNT];
             __m128i ngt_lim_i;
 
-            //TODO expensive?
             __m128i one[4] = {
                     _mm_set1_epi32(1),
                     _mm_set1_epi32(1),
@@ -230,14 +238,15 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
             do
             {
                 for (size_t j = 0; j < VEC_COUNT; j++) {
-                    __m128 zrtmp = zr[j]*zr[j] - zi[j]*zi[j] + cr;
+                    __m128 zrtmp = zr[j]*zr[j] - zi[j]*zi[j] + cr[j];
                     zi[j] = two * _mm_andnot_ps(abs_msk, zr[j]*zi[j]) + ci;
                     zr[j] = zrtmp;
 
                     ngt_lim[j] = _mm_cmpgt_ps(limit, zr[j]*zr[j] + zi[j]*zi[j]);
-                    i_vec[j] += _mm_castps_si128(ngt_lim[j]) & one[j];
+                    i_vec[j] += _mm_castps_si128(ngt_lim[j]) & one[j]; //TODO can be optimised
                 }
 
+                //TODO
                 ngt_lim_i = _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[0]), mv2lo32msk);
                 ngt_lim_i |= _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[1]), mv2hilo32msk);
                 ngt_lim_i |= _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[2]), mv2lohi32msk);
@@ -254,15 +263,17 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
                     SCALE_CLR_PS(i_vec[3], n)
             };
 
+            //TODO
             __m128i pvals_i = _mm_shuffle_epi8(pvals[0], mv2lo32msk);
-            pvals_i |= _mm_shuffle_epi8(pvals[1], mv2lohi32msk);
-            pvals_i |= _mm_shuffle_epi8(pvals[2], mv2hilo32msk);
+            pvals_i |= _mm_shuffle_epi8(pvals[1], mv2hilo32msk);
+            pvals_i |= _mm_shuffle_epi8(pvals[2], mv2lohi32msk);
             pvals_i |= _mm_shuffle_epi8(pvals[3], mv2hihi32msk);
 
             _mm_storeu_si128((__m128i_u *) (img+index), pvals_i);
         }
 
+        //TODO
         for (; w < width; w++)
-            burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
+            burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h-1, height, res), n, img);
     }
 }
