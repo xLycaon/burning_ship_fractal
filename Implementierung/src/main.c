@@ -142,7 +142,7 @@ int main(int argc, char* argv[argc]) {
 		switch (opt) {
 			case 'V':
 				ATOI_S(impl_ind, optarg, endptr)
-				CHECK_RANGE(opt, impl_ind, 0, sizeof(burning_ship_impl)/sizeof(burning_ship_impl[0]));
+				CHECK_RANGE(opt, impl_ind, 0, (sizeof(burning_ship_impl)/sizeof(burning_ship_impl[0]))-1);
 				break;
 			case 'B':
 				ATOI_S(time_cap, optarg, endptr);
