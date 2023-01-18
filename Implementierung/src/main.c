@@ -36,20 +36,23 @@
 #define ARO_MSK 0x3 // All required options 0011
 #define SET_ROPT(optv, msk) optv &= msk ^ ARO_MSK
 
-// BOUND VALUES
-#define MAX_ITER 1000
+// CONSTANTS
+#define MAX_ITER 100 // TODO might also be higher
+#define MIN_ITER 1
 
-#define MAX_N 200
+#define MAX_N 200 // TODO values > 200 are Impractical due to how colors are calculated see SCALE_CLR
 #define MIN_N 1
 
 #define MIN_W 100
-#define MAX_W 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory
+#define MAX_W 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory //TODO might be higher
 
 #define MIN_H 100
-#define MAX_H 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory
+#define MAX_H 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory //TODO might be higher
 
 #define DPATH_LEN 2
 #define BMP_EXT_LEN 4
+
+// END CONSTANTS
 
 /* redefinitions for atoi from stdlib.h */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -79,7 +82,8 @@ if ( (TKNS[1] = strtok(NULL, SEP)) == NULL ) { \
 	FAIL("ERROR: Space after , or no argument!\n"); \
 }
 
-#define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V)
+#define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V) //TODO ONE Function for floats and ints SIMULTANEOUSLY?
+#define CHECK_RANGE_F(OPT, VAL, MIN_V, MAX_V) //TODO ??? for floats
 //TODO
 /*
 #define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V) \
