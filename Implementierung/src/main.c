@@ -69,6 +69,7 @@ if ( *ENDPTR != '\0' ) { \
 }
 
 #define STRTOLT(NPTR, ENDPTR, T) T(NPTR, &ENDPTR, 10)
+
 #define STRTOFT(NPTR, ENDPTR, T) T(NPTR, &ENDPTR)
 
 #define ATOI_S(VAR, ARG, ENDPTR) ATOT_S(VAR, ARG, ENDPTR, STRTOLT(ARG, ENDPTR, strtol))
@@ -82,7 +83,10 @@ if ( (TKNS[1] = strtok(NULL, SEP)) == NULL ) { \
 	FAIL("ERROR: Space after , or no argument!\n"); \
 }
 
-#define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V) //TODO ONE Function for floats and ints SIMULTANEOUSLY?
+#define CHECK_RANGE(OPT, VAL, MIN_V, MAX_V) \
+if ( VAL < MIN_V || VAL > MAX_V ) {  \
+	FAIL("ERROR in -%c: %d is OUT OF RANGE %d to %d inclusive!\n", OPT, VAL, MIN_V, MAX_V); \
+}
 #define CHECK_RANGE_F(OPT, VAL, MIN_V, MAX_V) //TODO ??? for floats
 //TODO
 /*
@@ -120,7 +124,7 @@ int main(int argc, char* argv[argc]) {
 	// Other parameters required for getopt
 	int opt, l_optind;
 	char *endptr, *tkns[2], ropt_nset = ARO_MSK;
-	const char* optstr = ":V::B::s:d:n:r:o:h";
+	const char* optstr = ":V:B:s:d:n:r:o:h";
 	const struct option longopts[] = {
 		{"help", no_argument, NULL, 'h'},
 		{NULL, 0, NULL, 0}
@@ -137,9 +141,8 @@ int main(int argc, char* argv[argc]) {
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
 			case 'V':
-                //TODO
 				ATOI_S(impl_ind, optarg, endptr)
-				CHECK_RANGE(opt, impl_ind, 0, sizeof bs / sizeof bs[0]);
+				CHECK_RANGE(opt, impl_ind, 0, sizeof(burning_ship_impl)/sizeof(burning_ship_impl[0]));
 				break;
 			case 'B':
 				ATOI_S(time_cap, optarg, endptr);
