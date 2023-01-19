@@ -51,6 +51,9 @@
 #define FOUR_DIV(X) ((X) & ~3ul)
 #define HEX_DIV(X) ((X) & ~0xf) //TODO
 
+#define IS_DIV4(X) ((int) (X) & 03)
+#define IS_DIV16(X) ((int) (X) & 0xf)
+
 // We can show that lim sup n -> ∞ |zn| ≤ 2
 // Therefore zr^2 + zi^2 ≤ 4
 #define LIMIT 4
@@ -144,7 +147,7 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
             __m128i one = _mm_set1_epi32(1);
 
             unsigned i = 0;
-            __m128i i_vec = _mm_setzero_si128(); // i = 0
+            __m128i i_vec = _mm_setzero_si128();
             do {
                 __m128 zrtmp = zrzr - zizi + cr;
                 zi = two * _mm_andnot_ps(abs_msk, zr * zi) + ci;
