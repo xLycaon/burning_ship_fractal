@@ -197,6 +197,7 @@ int main(int argc, char* argv[argc]) {
 		}
 	}
 
+    //TEST
     // Checks if program arguments are only options
 	if ( optind != argc ) {
 		FAIL("No paramters other than options are allowed\n");
