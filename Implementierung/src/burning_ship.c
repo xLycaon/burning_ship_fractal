@@ -47,16 +47,13 @@
 // Sets a chunk to zero (.) -> (0)
 #define Z_MSK (0x80808080)
 
-#define IS_NALGND(PTR) ((size_t) (PTR) & 0xf)
 #define FOUR_DIV(X) ((X) & ~3ul)
 #define HEX_DIV(X) ((X) & ~0xf) //TODO
-
-#define IS_DIV4(X) ((int) (X) & 03)
-#define IS_DIV16(X) ((int) (X) & 0xf)
 
 // We can show that lim sup n -> ∞ |zn| ≤ 2
 // Therefore zr^2 + zi^2 ≤ 4
 #define LIMIT 4
+
 
 static inline __attribute__((always_inline)) void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned char* img) {
 
@@ -101,7 +98,6 @@ void burning_ship(float complex start, size_t width, size_t height,
 	}
 }
 
-//TODO incorrect results when width is not a multiple of 4
 void burning_ship_V1(float complex start, size_t width, size_t height,
                      float res, unsigned n, unsigned char* img) {
     float s_ci = cimagf(start);
@@ -128,25 +124,21 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
             __m128 zr = _mm_setzero_ps();
             __m128 zi = _mm_setzero_ps();
 
-            __m128 zrzr = _mm_setzero_ps();
-            __m128 zizi = _mm_setzero_ps();
-
             __m128 ngt_lim;
 
             __m128i one = _mm_set1_epi32(1);
 
             unsigned i = 0;
             __m128i i_vec = _mm_setzero_si128();
-            do {
-                __m128 zrtmp = zrzr - zizi + cr;
+            do
+            {
+                ngt_lim = _mm_cmpgt_ps(limit, zr*zr + zi*zi);
+                i_vec += _mm_castps_si128(ngt_lim) & one;
+
+                __m128 zrtmp = zr*zr - zi*zi + cr;
                 zi = two * _mm_andnot_ps(abs_msk, zr * zi) + ci;
                 zr = zrtmp;
 
-                ngt_lim = _mm_cmpgt_ps(limit, zrzr + zizi);
-                i_vec += _mm_castps_si128(ngt_lim) & one;
-
-                zrzr = zr * zr;
-                zizi = zi * zi;
             } while (_mm_movemask_ps(ngt_lim) & (int) 0xf && i++ < n);
 
             index = w + h * width;
@@ -157,9 +149,10 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
             _mm_storeu_si32((__m128i_u *) (img + index), pvals);
         }
 
-        //TODO
-        for (; w < width; w++)
+        index += PSTEP;
+        for (; w < width; w++) {
             burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
+        }
     }
 }
 
@@ -195,7 +188,6 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
 
     size_t index = 0;
 
-    // TODO precalculate cr and ci ?
     for (size_t h = 0; h < height; h++) {
 
         __m128 ci = _mm_set1_ps(SCALERES(h, height, res) + s_ci);
@@ -203,7 +195,6 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
         size_t w = 0;
         for (; w < HEX_DIV(width); w+=PSTEP16) {
 
-            //TODO
             __m128 cr[VEC_COUNT] = {
                     SCALERES_PS(w, width, res, s_cr),
                     SCALERES_PS(w+VEC_COUNT, width, res, s_cr),
@@ -230,12 +221,12 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
             do
             {
                 for (size_t j = 0; j < VEC_COUNT; j++) {
+                    ngt_lim[j] = _mm_cmpgt_ps(limit, zr[j]*zr[j] + zi[j]*zi[j]);
+                    i_vec[j] += _mm_castps_si128(ngt_lim[j]) & one[j];
+
                     __m128 zrtmp = zr[j]*zr[j] - zi[j]*zi[j] + cr[j];
                     zi[j] = two * _mm_andnot_ps(abs_msk, zr[j]*zi[j]) + ci;
                     zr[j] = zrtmp;
-
-                    ngt_lim[j] = _mm_cmpgt_ps(limit, zr[j]*zr[j] + zi[j]*zi[j]);
-                    i_vec[j] += _mm_castps_si128(ngt_lim[j]) & one[j]; //TODO can be optimised
                 }
 
                 //TODO
@@ -255,7 +246,6 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
                     SCALE_CLR_PS(i_vec[3], n)
             };
 
-            //TODO
             __m128i pvals_i = _mm_shuffle_epi8(pvals[0], mv2lo32msk);
             pvals_i |= _mm_shuffle_epi8(pvals[1], mv2hilo32msk);
             pvals_i |= _mm_shuffle_epi8(pvals[2], mv2lohi32msk);
@@ -264,8 +254,9 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
             _mm_storeu_si128((__m128i_u *) (img+index), pvals_i);
         }
 
-        //TODO
-        for (; w < width; w++)
+        w+=PSTEP16;
+        for (; w < width; w++) {
             burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
+        }
     }
 }

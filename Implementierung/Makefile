@@ -6,7 +6,7 @@ OUT = prog
 
 SRC = $(wildcard $(SRCDIR)/*.c)
 
-.PHONY: clean run all debug
+.PHONY: clean run all debug benchmark
 
 all: $(OUT)
 $(OUT): $(SRC) 
@@ -22,3 +22,6 @@ run:
 
 debug:
 	gdb $(OUT)
+
+benchmark:
+	python3 src/benchmark.py

@@ -4,3 +4,4 @@ prog
 tags
 *.bmp
 *.dSYM
+venv

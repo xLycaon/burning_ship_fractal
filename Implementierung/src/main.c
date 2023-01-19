@@ -234,11 +234,18 @@ int main(int argc, char* argv[argc]) {
                         .img = img
             }
                 , time_cap);
+        printf("Benchmark complete!\n");
     }
 
 	// FILE PATH for result
 	memcpy(file_name, "./", DPATH_LEN);
 	strncat(file_name, ".bmp", BMP_EXT_LEN);
+
+    // CREATE NO IMAGE when benchmarking
+    if (time_cap >= 1) {
+        free(img);
+        return EXIT_SUCCESS;
+    }
 
 	// WRITING IMAGE DATA INTO FILE
 	printf("Creating image file...\n");
