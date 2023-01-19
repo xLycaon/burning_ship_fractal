@@ -161,7 +161,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 img_w = atoi_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
-                check_range(img_w, MIN_W, MAX_W);
+                //check_range(img_w, MIN_W, MAX_W);
 
                 tmp = strtok(NULL, sep);
                 if (tmp == NULL) {
@@ -169,7 +169,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 img_h = atoi_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
-                check_range(img_h, MIN_H, MAX_H);
+                //check_range(img_h, MIN_H, MAX_H);
 				break;
 			case 'n':
                 optset |= N_OPT;

@@ -58,6 +58,21 @@
 // Therefore zr^2 + zi^2 ≤ 4
 #define LIMIT 4
 
+static inline __attribute__((always_inline)) void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned char* img) {
+
+    float zr = 0.0f;
+    float zi = 0.0f;
+
+    unsigned i = 0;
+    for (; i < n && zr*zr + zi*zi <= LIMIT; i++) {
+        float zrtmp = zr*zr - zi*zi + cr;
+        zi = 2.0f * fabsf(zr*zi) + ci;
+        zr = zrtmp;
+    }
+
+    img[index] = SCALE_CLR(i, n);
+}
+
 // c = cr + I * ci
 // Z(n+1) = (|Re(Z(n))| + I * |Imag(Z(n))|)^2 + c = (|zr| + I * |zi|)^2 + (cr + I * ci)
 // Re(Z(n+1)) = (zr)^2 - (zi)^2 + cr
@@ -65,7 +80,6 @@
 void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img)
 {
-	float zr, zi;
 	float cr, ci;
 
     float s_cr = crealf(start);
@@ -80,36 +94,11 @@ void burning_ship(float complex start, size_t width, size_t height,
 
 			// cr := x-coord + offset
 			cr = SCALERES(w, width, res) + s_cr;
-
-            zr = 0.0f;
-            zi = 0.0f;
-
-			unsigned i = 0;
-			for (; i < n && zr*zr + zi*zi <= LIMIT; i++) {
-				float zrtmp = zr*zr - zi*zi + cr;
-				zi = 2.0f * fabsf(zr*zi) + ci;
-				zr = zrtmp;
-			}
-
             size_t index = BMDIM(w) + h * BMDIM(width);
-            img[index] = SCALE_CLR(i, n);
+
+            burning_ship_step(index, cr, ci, n, img);
 		}
 	}
-}
-
-static inline void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned char* img) {
-
-    float zr = 0.0f;
-    float zi = 0.0f;
-
-    unsigned i = 0;
-    for (; i < n && zr*zr + zi*zi <= LIMIT; i++) {
-        float zrtmp = zr*zr + zi*zi + cr;
-        zi = 2.0f * fabsf(zr*zi) + ci;
-        zr = zrtmp;
-    }
-
-    img[index] = SCALE_CLR(i, n);
 }
 
 //TODO incorrect results when width is not a multiple of 4
@@ -277,6 +266,6 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
 
         //TODO
         for (; w < width; w++)
-            burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h-1, height, res), n, img);
+            burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
     }
 }
