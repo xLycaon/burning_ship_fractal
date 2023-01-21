@@ -12,16 +12,38 @@
 
 #define PROGNAME "prog"
 #define USAGE \
-"usage: " PROGNAME " [-h | --help] [-o <Dateiname>]\n" \
-"            [-V <Zahl>] [-B <Zahl>] [-r <Floating Point Zahl>]\n" \
-"            [-s <Realteil>,<Imaginärteil>] [-d <Zahl>,<Zahl>] [-n <Zahl>]" \
+"usage: " PROGNAME " [-h | --help] [-o <file name>]\n" \
+"            [-V <Integer>] [-B <Integer>] [-r <Floating Point Number>]\n" \
+"            [-s <Real part>,<Imaginary part>] [-d <Integer>,<Integer>] [-n <Integer>]\n" \
+"            [-t | --test]"
 
 //TODO
+#define INVALID_CHARS ""
+#define NUM_IMPL "2"
+#define MAX_BENCH "100"
+
 #define USAGE_V \
+"Only the options below are accepted!" \
 "\n" \
-"NO PARAMETERS ARE ACCEPTED OTHER THAN OPTIONS\n" \
+"-h | --help --- Displays verbose information about options, their parameters and shows some examples on how to use them." \
+"\n"            \
+"-o <file name> --- Sets a name for the output file. Any file name that contains invalid characters (" INVALID_CHARS ") is not allowed." \
+"\n"            \
+"-V <Integer> --- Accepts integer values in range [0," NUM_IMPL "]. The number indicates which implementation of the following "           \
+"is used to create the image: \n" \
+"0 -> standard implementation\n" \
+"1 -> SIMD implementation\n"           \
+"Only ONE implementation can be selected at once!. If not set the standard implementation is used instead!"           \
 "\n" \
-"-h | --help *** displays verbose help\n"
+"-B <Integer> --- When this option is set, benchmarks of the specified implementation are run. The number in range [1," MAX_BENCH"] specifies how many times a benchmark is run." \
+"\n"            \
+"-s <Real part>,<Imaginary part> --- Sets the used coordinates (r, i) on the complex plane to be the center of the image. The default is (0, 0). "                                  \
+"Because the burning-ship Fractal is located in the area of the complex plane that spans a vector space of [-2, 2] x [-2,2] only values between -2 and 2 are allowed."            \
+"Values MUST be seperated by a comma with NO spaces in between them!"            \
+"\n"            \
+"-r <Floating Point Number> --- Zooms into the Fractal. Values > 1 Zoom out and 0 < values < 1 Zoom in. The precision for Zooming is at 1E-5." \
+" Negative numbers have no meaning this context and thus are discarded." \
+" Values MUST be seperated by a comma with NO spaces in between them!"
 
 #define FAIL(...) do {fprintf(stderr, __VA_ARGS__); printf("%s\n", USAGE); exit(EXIT_FAILURE);} while(0)
 #define FAIL_E() exit(EXIT_FAILURE);
@@ -38,6 +60,8 @@
 
 #define MIN_H 100
 #define MAX_H 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory //TODO might be higher
+
+#define RADIUS (2.0f)
 
 #define DPATH_LEN 2
 #define BMP_EXT_LEN 4
@@ -56,6 +80,7 @@ FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 
 //TODO header
 extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
+extern void test_scaling(void);
 
 static inline int atoi_s(const char* arg) {
     errno = 0;
@@ -89,6 +114,12 @@ static inline void check_range(long val, long min, long max) {
     }
 }
 
+static inline void check_range_f(float val, float min, float max) {
+    if (val < min || val > max) {
+        FAIL("%f is out of bounds [%f, %f]!\n", val, min, max);
+    }
+}
+
 //TODO limit range of s_val and pres
 int main(int argc, char* argv[argc]) {
 
@@ -111,7 +142,7 @@ int main(int argc, char* argv[argc]) {
 
 	// Other parameters required for getopt
 	int opt, l_optind, optset = 0, test = 0;
-	const char *optstr = ":V:B:s:d:n:r:o:h", *sep = ",";
+	const char *optstr = ":V:B:s:d:n:r:o:h", *sep = ", ";
     char* tmp;
 	const struct option longopts[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -124,6 +155,8 @@ int main(int argc, char* argv[argc]) {
 		burning_ship
         ,burning_ship_V1
         ,burning_ship_V2
+        ,burning_ship_V3
+        ,burning_ship_V4
 	};
 
 	// UPDATES DEFAULT PARAMETERS
@@ -146,6 +179,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 s_real = atof_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
+                check_range_f(s_real, -RADIUS, RADIUS);
 
                 tmp = strtok(NULL, sep);
                 if (tmp == NULL) {
@@ -153,6 +187,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 s_imag = atof_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
+                check_range_f(s_real, -RADIUS, RADIUS);
 
 				s_val = s_real + I * s_imag;
 				break;
@@ -208,7 +243,6 @@ int main(int argc, char* argv[argc]) {
 		}
 	}
 
-    //TEST
     // Checks if program arguments are only options
 	if ( optind != argc ) {
 		FAIL("No paramters other than options are allowed\n");
@@ -227,6 +261,7 @@ int main(int argc, char* argv[argc]) {
 
     // Test Execution
     if (test) {
+        printf("Running tests...\n");
         test_image_sanity(burning_ship_impl[impl_ind], burning_ship_impl[0], (struct BS_Params) {
                 .start = s_val,
                 .width = img_w,
@@ -240,6 +275,7 @@ int main(int argc, char* argv[argc]) {
 
     unsigned char* img;
 
+    // BENCHMARKING
     if (time_cap >= 1) {
         // Allocate image-memory necessary for benchmarks
         if ( (img = malloc(BMRS(img_w) * img_h) ) == NULL) {

@@ -14,6 +14,12 @@
             (((float) -(RES)) + SCALEFACT * ((float) (RES))) * ((float) (X) / (float) (SIZE)) \
         ) \
 )
+
+//TODO
+#define SCALE_OFF(OFF, RES, INV) (float) ( \
+    ( (float) -(RES) / 2.0f ) + ((INV) ? -1.0f : 1.0f) * ( (float) OFF )   \
+)
+
 #define BW_CLR(ITER, N) ( (ITER) > (N)/2 ? 0x00 : 0xff )
 #define SCALE_CLR(ITER, N) ( (unsigned char) ((float)(ITER)/(float)(N) * (float) (TOTAL_COLORS-1)) )
 
@@ -81,6 +87,8 @@ void burning_ship(float complex start, size_t width, size_t height,
 
     float s_cr = crealf(start);
     float s_ci = cimagf(start);
+    s_cr = SCALE_OFF(s_cr, res, 0);
+    s_ci = SCALE_OFF(s_ci, res, 1);
 
 	for (size_t h = 0; h < height; h++) {
 
@@ -102,6 +110,8 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
                      float res, unsigned n, unsigned char* img) {
     float s_ci = cimagf(start);
     float s_cr = crealf(start);
+    s_cr = SCALE_OFF(s_cr, res, 0);
+    s_ci = SCALE_OFF(s_ci, res, 1);
 
     __m128 abs_msk = _mm_set1_ps(-0.0f);
     __m128 two = _mm_set1_ps(2.0f);
@@ -157,6 +167,8 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
 {
     float s_ci = cimagf(start);
     float s_cr = crealf(start);
+    s_cr = SCALE_OFF(s_cr, res, 0);
+    s_ci = SCALE_OFF(s_ci, res, 1);
 
     __m128 abs_msk = _mm_set1_ps(-0.0f);
     __m128 two = _mm_set1_ps(2.0f);
@@ -248,4 +260,29 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
             burning_ship_step(w + h * width, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
         }
     }
+}
+
+// Assuming ci < res and cr < res
+void burning_ship_V3(float complex start, size_t width, size_t height,
+                     float res, unsigned n, unsigned char* img)
+{
+    //TODO
+    (void)start;
+    (void)width;
+    (void)height;
+    (void)res;
+    (void)n;
+    (void)img;
+}
+
+void burning_ship_V4(float complex start, size_t width, size_t height,
+                     float res, unsigned n, unsigned char* img)
+{
+    //TODO
+    (void)start;
+    (void)width;
+    (void)height;
+    (void)res;
+    (void)n;
+    (void)img;
 }
