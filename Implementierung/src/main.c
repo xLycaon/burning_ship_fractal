@@ -196,8 +196,12 @@ int main(int argc, char* argv[argc]) {
 				printf("%s\n", USAGE_V);
 				exit(EXIT_SUCCESS);
 			case ':':
+                if(optopt == 'B'){
+                    time_cap = 1;
+                    break;
+                }
 				FAIL("%c requires argument(s)!\n", optopt);
-			case '?':
+            case '?':
 				FAIL("Option %c unrecognized!\n", optopt);
             default:
                 FAIL("Unknown ERROR!\n");
