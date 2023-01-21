@@ -235,6 +235,7 @@ int main(int argc, char* argv[argc]) {
                 .n = iter_n,
                 .img = NULL
         });
+        exit(EXIT_SUCCESS);
     }
 
     // Allocates memory to the final size of the .bmp output file
@@ -246,6 +247,7 @@ int main(int argc, char* argv[argc]) {
     if (time_cap < 1) {
         printf("Calculating results...\n");
         burning_ship_impl[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
+        exit(EXIT_SUCCESS);
     } else {
         printf("Starting Benchmark...\n");
         time_fn(burning_ship_impl[impl_ind], (struct BS_Params) { // TODO catching errors -> free(img) ?
@@ -263,12 +265,6 @@ int main(int argc, char* argv[argc]) {
 	// FILE PATH for result
 	memcpy(file_name, "./", DPATH_LEN);
 	strncat(file_name, ".bmp", BMP_EXT_LEN);
-
-    // CREATE NO IMAGE when benchmarking
-    if (time_cap >= 1) {
-        free(img);
-        return EXIT_SUCCESS;
-    }
 
 	// WRITING IMAGE DATA INTO FILE
 	printf("Creating image file...\n");
