@@ -42,6 +42,8 @@
 #define DPATH_LEN 2
 #define BMP_EXT_LEN 4
 
+// END CONSTANTS
+
 #define D_OPT (0x1)
 #define N_OPT (0x2)
 
@@ -52,7 +54,8 @@ FAIL("Param %s in -%c contains non-digit params!\n", (OPTARG), (OPT)); \
 FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 }
 
-// END CONSTANTS
+//TODO header
+extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
 
 static inline int atoi_s(const char* arg) {
     errno = 0;
@@ -107,11 +110,12 @@ int main(int argc, char* argv[argc]) {
     STRLCPY(file_name+DPATH_LEN, "bs", 2+DPATH_LEN);
 
 	// Other parameters required for getopt
-	int opt, l_optind, optset = 0;
+	int opt, l_optind, optset = 0, test = 0;
 	const char *optstr = ":V:B:s:d:n:r:o:h", *sep = ",";
     char* tmp;
 	const struct option longopts[] = {
 		{"help", no_argument, NULL, 'h'},
+        {"test", no_argument, NULL, 't'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -184,6 +188,9 @@ int main(int argc, char* argv[argc]) {
             case 'o':
                 STRLCPY(file_name+DPATH_LEN, optarg,FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
                 break;
+            case 't':
+                test = 1;
+                break;
 			case 'h':
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);
@@ -212,6 +219,18 @@ int main(int argc, char* argv[argc]) {
     }
     if ( ((optset & N_OPT) | (optset & D_OPT)) != (N_OPT | D_OPT) ) {
         goto Lerr;
+    }
+
+    // Test Execution
+    if (test) {
+        test_image_sanity(burning_ship_impl[impl_ind], burning_ship_impl[0], (struct BS_Params) {
+                .start = s_val,
+                .width = img_w,
+                .height = img_h,
+                .res = pres,
+                .n = iter_n,
+                .img = NULL
+        });
     }
 
     // Allocates memory to the final size of the .bmp output file

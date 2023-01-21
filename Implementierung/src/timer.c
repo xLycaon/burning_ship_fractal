@@ -6,7 +6,7 @@
 #define GIGA 1000000000L
 #define NANO 1E-9
 
-static void ts_add(struct timespec a, struct timespec b, struct timespec* res) { //TODO
+static void ts_add(struct timespec a, struct timespec b, struct timespec* res) {
     res->tv_nsec = a.tv_nsec + b.tv_nsec;
     res->tv_sec = res->tv_nsec / GIGA;
     res->tv_nsec %= GIGA;

@@ -10,7 +10,7 @@ SRC = $(wildcard $(SRCDIR)/*.c)
 
 all: $(OUT)
 $(OUT): $(SRC) 
-	$(CC) $(CFLAGS) -o $@ $^ 
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
 	rm -f $(OUT)

@@ -111,8 +111,6 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
                                        (int) Z_MSK,
                                        (int) MV_4_SEG32);
 
-    size_t index = 0;
-
     for (size_t h = 0; h < height; h++) {
 
         __m128 ci = _mm_set1_ps(SCALERES(h, height, res) + s_ci);
@@ -141,17 +139,14 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
 
             } while (_mm_movemask_ps(ngt_lim) & (int) 0xf && i++ < n);
 
-            index = w + h * width;
-
             __m128i pvals = SCALE_CLR_PS(i_vec, n);
             pvals = _mm_shuffle_epi8(pvals, mv2lo32msk);
 
-            _mm_storeu_si32((__m128i_u *) (img + index), pvals);
+            _mm_storeu_si32((__m128i_u *) (img + w + h * width), pvals); //TODO stack?
         }
 
-        index += PSTEP;
         for (; w < width; w++) {
-            burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
+            burning_ship_step(w + h * width, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
         }
     }
 }
@@ -185,8 +180,6 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
                                          (int) Z_MSK,
                                          (int) Z_MSK,
                                          (int) Z_MSK);
-
-    size_t index = 0;
 
     for (size_t h = 0; h < height; h++) {
 
@@ -229,15 +222,12 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
                     zr[j] = zrtmp;
                 }
 
-                //TODO
                 ngt_lim_i = _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[0]), mv2lo32msk);
                 ngt_lim_i |= _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[1]), mv2hilo32msk);
                 ngt_lim_i |= _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[2]), mv2lohi32msk);
                 ngt_lim_i |= _mm_shuffle_epi8(_mm_castps_si128(ngt_lim[3]), mv2hihi32msk);
 
             } while( _mm_movemask_epi8(ngt_lim_i) & (int) 0xff && i++ < n);
-
-            index = w + h * width;
 
             __m128i pvals[VEC_COUNT] = {
                     SCALE_CLR_PS(i_vec[0], n),
@@ -251,12 +241,11 @@ void burning_ship_V2(float complex start, size_t width, size_t height,
             pvals_i |= _mm_shuffle_epi8(pvals[2], mv2lohi32msk);
             pvals_i |= _mm_shuffle_epi8(pvals[3], mv2hihi32msk);
 
-            _mm_storeu_si128((__m128i_u *) (img+index), pvals_i);
+            _mm_storeu_si128((__m128i_u *) (img + w + h * width), pvals_i);
         }
 
-        w+=PSTEP16;
-        for (; w < width; w++) {
-            burning_ship_step(index++, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
+        for (; w < width; w++) { //TODO simd for if multiple of 4 or 8
+            burning_ship_step(w + h * width, SCALERES(w, width, res), SCALERES(h, height, res), n, img);
         }
     }
 }
