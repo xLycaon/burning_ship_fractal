@@ -238,17 +238,13 @@ int main(int argc, char* argv[argc]) {
         exit(EXIT_SUCCESS);
     }
 
-    // Allocates memory to the final size of the .bmp output file
-	unsigned char* img;
-    if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof (struct COLOR_TB16)) ) == NULL)
-		goto Lerr;
+    unsigned char* img;
 
-    // Check if Benchmark is going to be runned.
-    if (time_cap < 1) {
-        printf("Calculating results...\n");
-        burning_ship_impl[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
-        exit(EXIT_SUCCESS);
-    } else {
+    if (time_cap >= 1) {
+        // Allocate image-memory necessary for benchmarks
+        if ( (img = malloc(BMRS(img_w) * img_h) ) == NULL) {
+            goto Lerr;
+        }
         printf("Starting Benchmark...\n");
         time_fn(burning_ship_impl[impl_ind], (struct BS_Params) { // TODO catching errors -> free(img) ?
                         .start = s_val,
@@ -257,10 +253,20 @@ int main(int argc, char* argv[argc]) {
                         .res = pres,
                         .n = iter_n,
                         .img = img
-            }
+                }
                 , time_cap);
         printf("Benchmark complete!\n");
+        free(img);
+        exit(EXIT_SUCCESS);
     }
+
+    // Allocates memory to the final size of the .bmp output file
+    if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof (struct COLOR_TB16)) ) == NULL)
+		goto Lerr;
+
+    // Normal execution
+    printf("Calculating results...\n");
+    burning_ship_impl[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
 
 	// FILE PATH for result
 	memcpy(file_name, "./", DPATH_LEN);
