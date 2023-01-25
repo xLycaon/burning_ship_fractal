@@ -5,45 +5,12 @@
 #include <stddef.h>
 #include <errno.h>
 #include <complex.h>
+#include <float.h>
 
+#include "usage.h"
 #include "utils.h"
 #include "burning_ship.h"
 #include "timer.h"
-
-#define PROGNAME "prog"
-#define USAGE \
-"usage: " PROGNAME " [-h | --help] [-o <file name>]\n" \
-"            [-V <Integer>] [-B <Integer>] [-r <Floating Point Number>]\n" \
-"            [-s <Real part>,<Imaginary part>] [-d <Integer>,<Integer>] [-n <Integer>]\n" \
-"            [-t | --test]"
-
-//TODO
-#define INVALID_CHARS ""
-#define NUM_IMPL "2"
-#define MAX_BENCH "100"
-
-#define USAGE_V \
-"Only the options below are accepted!" \
-"\n" \
-"-h | --help --- Displays verbose information about options, their parameters and shows some examples on how to use them." \
-"\n"            \
-"-o <file name> --- Sets a name for the output file. Any file name that contains invalid characters (" INVALID_CHARS ") is not allowed." \
-"\n"            \
-"-V <Integer> --- Accepts integer values in range [0," NUM_IMPL "]. The number indicates which implementation of the following "           \
-"is used to create the image: \n" \
-"0 -> standard implementation\n" \
-"1 -> SIMD implementation\n"           \
-"Only ONE implementation can be selected at once!. If not set the standard implementation is used instead!"           \
-"\n" \
-"-B <Integer> --- When this option is set, benchmarks of the specified implementation are run. The number in range [1," MAX_BENCH"] specifies how many times a benchmark is run." \
-"\n"            \
-"-s <Real part>,<Imaginary part> --- Sets the used coordinates (r, i) on the complex plane to be the center of the image. The default is (0, 0). "                                  \
-"Because the burning-ship Fractal is located in the area of the complex plane that spans a vector space of [-2, 2] x [-2,2] only values between -2 and 2 are allowed."            \
-"Values MUST be seperated by a comma with NO spaces in between them!"            \
-"\n"            \
-"-r <Floating Point Number> --- Zooms into the Fractal. Values > 1 Zoom out and 0 < values < 1 Zoom in. The precision for Zooming is at 1E-5." \
-" Negative numbers have no meaning this context and thus are discarded." \
-" Values MUST be seperated by a comma with NO spaces in between them!"
 
 #define FAIL(...) do {fprintf(stderr, __VA_ARGS__); printf("%s\n", USAGE); exit(EXIT_FAILURE);} while(0)
 #define FAIL_E() exit(EXIT_FAILURE);
@@ -52,7 +19,7 @@
 #define MAX_ITER 100 // TODO might also be higher
 #define MIN_ITER 1
 
-#define MAX_N 200 // TODO values > 200 are Impractical due to how colors are calculated see SCALE_CLR
+#define MAX_N 10000
 #define MIN_N 1
 
 #define MIN_W 100
@@ -60,6 +27,8 @@
 
 #define MIN_H 100
 #define MAX_H 10000 // -> (3*1E4)^2 -> 900MB image -> 11% of 8GB phys. memory //TODO might be higher
+
+#define MIN_ZOOM (4.0f)
 
 #define RADIUS (2.0f)
 
@@ -125,7 +94,7 @@ int main(int argc, char* argv[argc]) {
 
 	// DEFAULT parameters
 	int impl_ind, time_cap, iter_n;
-	float s_real, s_imag, pres;
+	float s_real, s_imag, pres; //TODO pres double?
 	float complex s_val;
 	long img_w, img_h;
 	char file_name[FILENAME_MAX];
@@ -147,6 +116,9 @@ int main(int argc, char* argv[argc]) {
 	const struct option longopts[] = {
 		{"help", no_argument, NULL, 'h'},
         {"test", no_argument, NULL, 't'},
+        {"double", no_argument, NULL, 0}, //TODO double precision input
+        {"L_double", no_argument, NULL, 0}, //TODO long double precision
+        {"arbitrary", no_argument, NULL, 0}, //TODO extended precision
 		{NULL, 0, NULL, 0}
 	};
 
@@ -154,9 +126,7 @@ int main(int argc, char* argv[argc]) {
 	const burning_ship_t burning_ship_impl[] = {
 		burning_ship
         ,burning_ship_V1
-        ,burning_ship_V2
-        ,burning_ship_V3
-        ,burning_ship_V4
+        ,burning_ship_AVX256
 	};
 
 	// UPDATES DEFAULT PARAMETERS
@@ -219,6 +189,7 @@ int main(int argc, char* argv[argc]) {
 			case 'r':
                 pres = atof_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
+                check_range_f(pres, FLT_MIN, MIN_ZOOM);
 				break;
             case 'o':
                 STRLCPY(file_name+DPATH_LEN, optarg,FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);

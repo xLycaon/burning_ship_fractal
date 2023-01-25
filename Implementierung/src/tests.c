@@ -7,10 +7,11 @@
 
 void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
 
-void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params) {
+//TODO introduce epsilon for inaccuracy of pixel values
+void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params) { //TODO reset cache?
     unsigned char *img1, *img2;
 
-    size_t i_size = BMRS(params.width) * params.height;
+    size_t i_size = params.width * params.height;
 
     if ( (img1 = malloc(i_size)) == NULL ) {
         exit(EXIT_FAILURE);
