@@ -35,6 +35,13 @@
 #define DPATH_LEN 2
 #define BMP_EXT_LEN 4
 
+//benchmark constants
+#define MAX_BENCH_ITER 5
+#define MIN_BENCH_ITER 1
+
+//epsilon for image sanity test
+#define EPS 0.000001
+
 // END CONSTANTS
 
 #define D_OPT (0x1)
@@ -47,8 +54,8 @@ FAIL("Param %s in -%c contains non-digit params!\n", (OPTARG), (OPT)); \
 FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 }
 
-//TODO header
-extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
+
+extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon);
 extern void test_scaling(void);
 
 static inline int atoi_s(const char* arg) {
@@ -137,10 +144,10 @@ int main(int argc, char* argv[argc]) {
                 PARG_CHECK_ERRNO(opt, optarg);
                 check_range(impl_ind, 0, (sizeof burning_ship_impl / sizeof burning_ship_impl[0]) - 1);
 				break;
-			case 'B':
+            case 'B':
                 time_cap = atoi_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
-                check_range(time_cap, MIN_ITER, MAX_ITER);
+                check_range(time_cap, MIN_BENCH_ITER, MAX_BENCH_ITER);
 				break;
 			case 's':
                 tmp = strtok(optarg, sep);
@@ -233,6 +240,7 @@ int main(int argc, char* argv[argc]) {
     // Test Execution
     if (test) {
         printf("Running tests...\n");
+        //add EPSILON as parameter
         test_image_sanity(burning_ship_impl[impl_ind], burning_ship_impl[0], (struct BS_Params) {
                 .start = s_val,
                 .width = img_w,
@@ -240,7 +248,7 @@ int main(int argc, char* argv[argc]) {
                 .res = pres,
                 .n = iter_n,
                 .img = NULL
-        });
+        },EPS);
         exit(EXIT_SUCCESS);
     }
 

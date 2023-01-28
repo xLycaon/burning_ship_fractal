@@ -5,10 +5,10 @@
 #include "timer.h"
 #include "utils.h"
 
-void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
+void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params,double epsilon);
 
-//TODO introduce epsilon for inaccuracy of pixel values
-void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params) { //TODO reset cache?
+
+void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params,double epsilon) {
     unsigned char *img1, *img2;
     size_t different_pixels;
     double difference_percentage;
@@ -27,7 +27,7 @@ void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params 
 
     different_pixels = memcmp(img1, img2, i_size);
     difference_percentage = (double) different_pixels / i_size * 100;
-    if(difference_percentage > 0.0)
+    if(difference_percentage > epsilon)
         printf("TEST: Image difference is %lf%%\n", difference_percentage);
     else
         printf("TEST: Images are equal!\n");
