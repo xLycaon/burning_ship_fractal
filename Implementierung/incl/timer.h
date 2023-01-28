@@ -17,4 +17,4 @@ struct BS_Params {
     unsigned char* img;
 };
 
-void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n);
+void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n, int *err);

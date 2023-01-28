@@ -40,7 +40,7 @@ static double to_secs(struct timespec t) {
     return (double) t.tv_sec + NANO * (double) t.tv_nsec;
 }
 
-void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
+void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n, int* err) {
 
     struct timespec run;
     struct timespec start;
@@ -54,7 +54,14 @@ void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
         clock_gettime(CLOCK_MONOTONIC, &start);
         fn(params.start, params.width, params.height, params.res, params.n, params.img);
         clock_gettime(CLOCK_MONOTONIC, &end);
-
+        if (end.tv_sec < start.tv_sec) {
+            *err = -1;
+            return;
+        }
+        if ((end.tv_sec == start.tv_sec) && (end.tv_nsec < start.tv_nsec)) {
+            *err = -1;
+            return;
+        }
         ts_sub(end, start, &run);
         ts_add(cum, run, &cum);
         if (ts_cmp(min, run) > 0)
@@ -75,4 +82,5 @@ void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
         printf("MAX: %E s.\n",
                to_secs(max));
     }
+    *err = 0;
 }

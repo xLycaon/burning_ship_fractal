@@ -257,19 +257,28 @@ int main(int argc, char* argv[argc]) {
     // BENCHMARKING
     if (time_cap >= 1) {
         // Allocate image-memory necessary for benchmarks
-        if ( (img = malloc(BMRS(img_w) * img_h) ) == NULL) {
+        int err = 0;
+        img = malloc(BMRS(img_w) * img_h);
+        if (img == NULL) {
+            perror("malloc failed");
             goto Lerr;
         }
         printf("Starting Benchmark...\n");
-        time_fn(burning_ship_impl[impl_ind], (struct BS_Params) { // TODO catching errors -> free(img) ?
-                        .start = s_val,
-                        .width = img_w,
-                        .height = img_h,
-                        .res = pres,
-                        .n = iter_n,
-                        .img = img
-                }
-                , time_cap);
+        time_fn(burning_ship_impl[impl_ind], (struct BS_Params) {
+                .start = s_val,
+                .width = img_w,
+                .height = img_h,
+                .res = pres,
+                .n = iter_n,
+                .img = img
+        }, time_cap, &err);
+
+        if (err != 0) {
+            // Error handling here
+            free(img);
+            exit(EXIT_FAILURE);
+        }
+
         printf("Benchmark complete!\n");
         free(img);
         exit(EXIT_SUCCESS);
