@@ -5,10 +5,14 @@
 #include <string.h>
 #include <sys/types.h>
 
+#ifdef __GNU_MP_VERSION
+#include <gmp.h> // TODO
+#endif // __GNU_MP_VERSION
+
 //#define MAGIC 0x424d
 #define MAGIC 0x4d42
 #define PAD_ALIGN 4
-#define BYTESPP 1/*3*/ // 24 (bpp) / 8 (bits)
+#define BYTESPP 1 /*3*/ // 24 (bpp) / 8 (bits)
 
 #define STRLCPY(SRC, DEST, LEN) \
 strncpy((SRC), (DEST), (LEN)-1); \
@@ -61,17 +65,10 @@ struct COLOR_TB16 {
     color_t entry[16];
 };
 
-struct COLOR_TB2 {
-    color_t entry[2];
-};
-
 struct DIM { //TODO
     size_t width;
     size_t height;
 };
 
-// Creates a new .bmp file with name as in path by:
-// 1) Writing the BITMAP header (bmph) in correct order first.
-// 2) Writing IMAGE DATA accordingly.
 ssize_t
 writef_bmp(unsigned char* img, const char* path, struct DIM dim);

@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <errno.h>
 #include <complex.h>
-#include <float.h>
 
 #include "usage.h"
 #include "utils.h"
@@ -19,7 +18,8 @@
 #define MAX_ITER 100 // TODO might also be higher
 #define MIN_ITER 1
 
-#define MAX_N 10000
+//#define MAX_N 10000
+#define MAX_N (INT32_MAX)
 #define MIN_N 1
 
 #define MIN_W 100
@@ -49,7 +49,6 @@ FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 
 //TODO header
 extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
-extern void test_scaling(void);
 
 static inline int atoi_s(const char* arg) {
     errno = 0;
@@ -83,21 +82,28 @@ static inline void check_range(long val, long min, long max) {
     }
 }
 
-static inline void check_range_f(float val, float min, float max) {
+static inline void check_range_f(long double val, long double min, long double max) { //TODO double
     if (val < min || val > max) {
-        FAIL("%f is out of bounds [%f, %f]!\n", val, min, max);
+        FAIL("%Lf is out of bounds [%Lf, %Lf]!\n", val, min, max);
     }
 }
+
+extern unsigned is_gmp; //TODO
 
 //TODO limit range of s_val and pres
 int main(int argc, char* argv[argc]) {
 
 	// DEFAULT parameters
 	int impl_ind, time_cap, iter_n;
-	float s_real, s_imag, pres; //TODO pres double?
-	float complex s_val;
+	long double s_real, s_imag, pres; //TODO double
+	long double complex s_val; //TODO double
 	long img_w, img_h;
 	char file_name[FILENAME_MAX];
+
+    // MP DEFAULT PARAMETERS //TODO
+    // mpfr_t mp_real, mp_imag, mp_pres;
+
+    //printf("%u\n", is_gmp); //TODO
 
 	// DEFAULT VALUES for parameters
 	impl_ind = 0;
@@ -109,26 +115,65 @@ int main(int argc, char* argv[argc]) {
 	img_h = -1;
     STRLCPY(file_name+DPATH_LEN, "bs", 2+DPATH_LEN);
 
+    // DEFAULT VALUES for multiple precision parameters //TODO
+    /*
+    mpfr_init(mp_pres);
+    mpfr_init(mp_real);
+    mpfr_init(mp_imag);
+
+    mpfr_set_d(mp_pres, 0, MPFR_RNDN);
+    mpfr_set_d(mp_real, 0, MPFR_RNDN);
+    mpfr_set_d(mp_imag, 0, MPFR_RNDN);
+
+    mpfr_clear(mp_pres);
+    mpfr_clear(mp_real);
+    mpfr_clear(mp_imag);
+     */
+
 	// Other parameters required for getopt
-	int opt, l_optind, optset = 0, test = 0;
+	int opt, l_optind, optset = 0, is_test = 0/*, is_mp = 0*/; //TODO is_mp
 	const char *optstr = ":V:B:s:d:n:r:o:h", *sep = ", ";
-    char* tmp;
+    char* tmp; //TODO
 	const struct option longopts[] = {
 		{"help", no_argument, NULL, 'h'},
         {"test", no_argument, NULL, 't'},
-        {"double", no_argument, NULL, 0}, //TODO double precision input
-        {"L_double", no_argument, NULL, 0}, //TODO long double precision
-        {"arbitrary", no_argument, NULL, 0}, //TODO extended precision
+        //TODO user should be able to set accuracy //TODO not sure if include
+        //{"gmp", optional_argument, NULL, 1}, // Enables Multiple Precision Calculations
 		{NULL, 0, NULL, 0}
 	};
 
 	// List of burning_ship implementations
+    //TODO
+    /*
 	const burning_ship_t burning_ship_impl[] = {
 		burning_ship
         ,burning_ship_V1
-        ,burning_ship_AVX256
-	};
 
+#ifdef __AVX2__
+        ,burning_ship_AVX256
+#endif // __AVX2__
+	};
+     */
+
+    const burning_ship_prec_t burning_ship_impl[] = {
+            {.f = burning_ship}
+            ,{.f = burning_ship_V1}
+#ifdef __AVX2__
+            ,{.f = burning_ship_AVX256}
+#endif // __AVX2__
+            ,{.d = burning_ship_d} //TODO macro
+            ,{.ld = burning_ship_ld} //TODO macro
+    };
+
+    // TODO
+    /*
+    // List of multiple precision burning_ship implementations
+    const burning_ship_MPt mp_burning_ship_impl[] = {
+            burning_ship_MP
+    };
+     */
+
+    //TODO case multiple precision //TODO not sure if include
 	// UPDATES DEFAULT PARAMETERS
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
@@ -142,7 +187,7 @@ int main(int argc, char* argv[argc]) {
                 PARG_CHECK_ERRNO(opt, optarg);
                 check_range(time_cap, MIN_ITER, MAX_ITER);
 				break;
-			case 's':
+			case 's': //TODO multiple precision
                 tmp = strtok(optarg, sep);
                 if (tmp == NULL) {
                     FAIL("Could not parse first parameter of -s!\n");
@@ -170,7 +215,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 img_w = atoi_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
-                //check_range(img_w, MIN_W, MAX_W);
+                check_range(img_w, MIN_W, MAX_W); //TODO
 
                 tmp = strtok(NULL, sep);
                 if (tmp == NULL) {
@@ -178,7 +223,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 img_h = atoi_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
-                //check_range(img_h, MIN_H, MAX_H);
+                check_range(img_h, MIN_H, MAX_H); //TODO
 				break;
 			case 'n':
                 optset |= N_OPT;
@@ -186,17 +231,23 @@ int main(int argc, char* argv[argc]) {
                 PARG_CHECK_ERRNO(opt, optarg);
                 check_range(iter_n, MIN_N, MAX_N);
 				break;
-			case 'r':
+			case 'r': //TODO multiple precision
                 pres = atof_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
-                check_range_f(pres, FLT_MIN, MIN_ZOOM);
+                //check_range_f(pres, FLT_MIN, MIN_ZOOM);
 				break;
             case 'o':
                 STRLCPY(file_name+DPATH_LEN, optarg,FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
                 break;
             case 't':
-                test = 1;
+                is_test = 1;
                 break;
+                /*
+            case 1: //TODO multiple precision
+                is_mp = 1;
+                mpfr_set_default_prec(53); //TODO
+                break;
+                 */
 			case 'h':
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);
@@ -214,6 +265,16 @@ int main(int argc, char* argv[argc]) {
 		}
 	}
 
+    // Deletes mpfr pointers if gmp flag was not specified
+    /*
+    if (!is_mp) { // TODO alternative?
+        mpfr_clear(mp_pres);
+        mpfr_clear(mp_real);
+        mpfr_clear(mp_imag);
+    }
+     */
+
+    //TODO
     // Checks if program arguments are only options
 	if ( optind != argc ) {
 		FAIL("No paramters other than options are allowed\n");
@@ -231,13 +292,13 @@ int main(int argc, char* argv[argc]) {
     }
 
     // Test Execution
-    if (test) {
+    if (is_test /*&& !is_mp*/) { //TODO
         printf("Running tests...\n");
-        test_image_sanity(burning_ship_impl[impl_ind], burning_ship_impl[0], (struct BS_Params) {
+        test_image_sanity(burning_ship_impl[impl_ind].f, burning_ship_impl[0].f, (struct BS_Params) { //TODO precision selection .f vs .d
                 .start = s_val,
                 .width = img_w,
                 .height = img_h,
-                .res = pres,
+                .res = (float) pres,
                 .n = iter_n,
                 .img = NULL
         });
@@ -247,17 +308,17 @@ int main(int argc, char* argv[argc]) {
     unsigned char* img;
 
     // BENCHMARKING
-    if (time_cap >= 1) {
+    if (time_cap >= 1 /*&& !is_mp*/) { //TODO
         // Allocate image-memory necessary for benchmarks
         if ( (img = malloc(BMRS(img_w) * img_h) ) == NULL) {
             goto Lerr;
         }
         printf("Starting Benchmark...\n");
-        time_fn(burning_ship_impl[impl_ind], (struct BS_Params) { // TODO catching errors -> free(img) ?
+        time_fn(burning_ship_impl[impl_ind].f, (struct BS_Params) { //TODO precision
                         .start = s_val,
                         .width = img_w,
                         .height = img_h,
-                        .res = pres,
+                        .res = (float) pres,
                         .n = iter_n,
                         .img = img
                 }
@@ -268,12 +329,28 @@ int main(int argc, char* argv[argc]) {
     }
 
     // Allocates memory to the final size of the .bmp output file
-    if ( (img = malloc(BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof (struct COLOR_TB16)) ) == NULL)
+    ssize_t fsize = BMRS(img_w) * img_h + sizeof (BMP_H) + sizeof (struct COLOR_TB16);
+    if ( (img = malloc(fsize)) == NULL)
 		goto Lerr;
 
     // Normal execution
     printf("Calculating results...\n");
-    burning_ship_impl[impl_ind](s_val, img_w, img_h, pres, iter_n, img);
+    burning_ship_impl[impl_ind].f(s_val, img_w, img_h, (float) pres, iter_n, img); //TODO precision
+    /*
+    if (is_mp) { // TODO
+        mp_burning_ship_impl[impl_ind](mp_real, mp_imag, img_w, img_h, mp_pres, iter_n, img);
+    } else {
+        burning_ship_impl[impl_ind](s_val, img_w, img_h, (float) pres, iter_n, img);
+    }
+     */
+
+    // frees mpfr pointers
+    //TODO exception handling
+    /*
+    mpfr_clear(mp_pres);
+    mpfr_clear(mp_real);
+    mpfr_clear(mp_imag);
+     */
 
 	// FILE PATH for result
 	memcpy(file_name, "./", DPATH_LEN);
@@ -281,9 +358,13 @@ int main(int argc, char* argv[argc]) {
 
 	// WRITING IMAGE DATA INTO FILE
 	printf("Creating image file...\n");
-	if ( writef_bmp(img, file_name, (struct DIM) {.width = img_w, .height = img_h} ) < 0 ) {
+    ssize_t written;
+	if ( (written = writef_bmp(img, file_name, (struct DIM) {.width = img_w, .height = img_h})) < 0 ) {
         free(img);
         goto Lerr;
+    }
+    if (written < fsize) {
+        fprintf(stderr, "WARNING: Only %ld out of %ld bytes were written successfully!", written, fsize);
     }
 
 	free(img);
