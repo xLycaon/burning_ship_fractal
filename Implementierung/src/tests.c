@@ -5,10 +5,10 @@
 #include "timer.h"
 #include "utils.h"
 
-void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params,double epsilon);
+void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon);
 
 
-void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params,double epsilon) {
+void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon) {
     unsigned char *img1, *img2;
     size_t different_pixels;
     double difference_percentage;

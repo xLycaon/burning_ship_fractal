@@ -103,7 +103,7 @@ int main(int argc, char* argv[argc]) {
     // MP DEFAULT PARAMETERS //TODO
     // mpfr_t mp_real, mp_imag, mp_pres;
 
-    printf("%u\n", is_gmp); //TODO
+    //printf("%u\n", is_gmp); //TODO
 
 	// DEFAULT VALUES for parameters
 	impl_ind = 0;
