@@ -1,7 +1,6 @@
 #pragma once
 
-#include <complex.h>
-#include <sys/types.h>
+#include "bs_types.h"
 
 void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img);
@@ -10,7 +9,18 @@ void burning_ship(float complex start, size_t width, size_t height,
 void burning_ship_V1(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img);
 
-// TODO signature
+#ifdef __AVX2__
+
 // AVX-Implementation of burning_ship
 void burning_ship_AVX256(float complex start, size_t width, size_t height,
                      float res, unsigned n, unsigned char* img);
+
+#endif // __AVX2__
+
+#ifdef __GNU_MP_VERSION
+
+// Multiple Precision Implementation of burning_ship
+void burning_ship_MP(mpfr_t real, mpfr_t imag, size_t width, size_t height,
+                     mpfr_t res, unsigned n, unsigned char* img);
+
+#endif // __GNU_MP_VERSION

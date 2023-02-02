@@ -7,9 +7,12 @@
 #include <immintrin.h>
 
 //AVX
-#include <avxintrin.h>
-#include <fmaintrin.h>
+#ifdef __AVX2__
 #include <avx2intrin.h>
+
+#define OCT_DIV(X) ((X) & ~0x7l)
+#define AVX_STEP (8)
+#endif // __AVX2__
 
 #include "burning_ship.h"
 #include "utils.h"
@@ -22,28 +25,18 @@
 #define SCALE_CLR(ITER, N, TYPE) ((unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-1)))
 
 #define SIMD_STEP (4)
-#define AVX_STEP (8)
-
 #define FOUR_DIV(X) ((X) & ~3ul)
-#define OCT_DIV(X) ((X) & ~0x7l)
 
-// Moves each lower value of 4 xmm chunks to lower 32bit
+// Moves each lower byte value of 4 xmm 32-bit chunks to lower 32bit
 #define MV_4_SEG32 (0x0c080400)
 
-// Sets a chunk to zero (.) -> (0)
+// Sets a 32-bit chunk to zero (.) -> (0)
 #define Z_MSK (0x80808080)
 
 static inline __attribute__((always_inline))
 __m128 _mm_scale2rng_ps(__m128 pos, __m128 rng, __m128 res)
 {
     return (pos * _mm_rcp_ps(rng) - _mm_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
-}
-
-static inline __attribute__((always_inline))
-__m256 _mm256_scale2rng_ps(__m256 pos, __m256 rng, __m256 res)
-{
-    //TODO
-    return _mm256_fmsub_ps(pos, _mm256_rcp_ps(rng), _mm256_set1_ps(0.5f)) * res;
 }
 
 //TODO color scaling not right
@@ -55,12 +48,23 @@ __m128i _mm_scaleclr_ps(__m128i iter, __m128 n)
     return _mm_cvtps_epi32(res);
 }
 
+#ifdef __AVX2__
+
+static inline __attribute__((always_inline))
+__m256 _mm256_scale2rng_ps(__m256 pos, __m256 rng, __m256 res)
+{
+    return _mm256_fmsub_ps(pos, _mm256_rcp_ps(rng), _mm256_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
+}
+
+//TODO color scaling function accuracy
 static inline __attribute((always_inline))
 __m256i _mm256_scaleclr_ps(__m256i iter, __m256 n)
 {
-    __m256 res = _mm256_cvtepi32_ps(iter) * _mm256_rcp_ps(n) * _mm256_set1_ps((float) (TOTAL_COLORS-1));
+    __m256 res = _mm256_cvtepi32_ps(iter) * _mm256_rcp_ps(n) * _mm256_set1_ps((float) (TOTAL_COLORS-1)); // TODO _mm256_set1_ps
     return _mm256_cvtps_epi32(res);
 }
+
+#endif // __AVX2__
 
 static inline __attribute__((always_inline))
 void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned char* img)
@@ -84,18 +88,46 @@ void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned ch
     img[index] = SCALE_CLR(i, n, float);
 }
 
-/*
+//TODO
+#ifdef __AVX2__
+
 static inline __attribute__((always_inline))
-void burning_ship_SIMD_step(size_t index, __m128 cr, __m128 ci, __m128 n, unsigned char *img)
-{
-    //TODO
+__m128i burning_ship_SIMD_step(__m128 cr, __m128 ci, unsigned n,
+                               __m128 two, __m128 abs_msk, __m128 limit) {
+
+    __m128 zr = _mm_setzero_ps();
+    __m128 zi = _mm_setzero_ps();
+
+    __m128i one = _mm_set1_epi32(1); //TODO
+
+    // ESCAPE LOOP
+    __m128i i_vec = {0};
+    unsigned i = 0;
+    while (i < n)
+    {
+        __m128 tmp = zr*zr - zi*zi + cr;
+        zi = two * _mm_andnot_ps(abs_msk, zr*zi) + ci;
+        zr = tmp;
+
+        __m128 gt_lim = _mm_cmpgt_ps(zr*zr+zi*zi, limit);
+        if (_mm_movemask_ps(gt_lim) == 0xf) // if every pixel exceeds the limit
+            break;
+
+        one = _mm_andnot_si128(_mm_castps_si128(gt_lim), one);
+        i_vec += one;
+        i++;
+    }
+
+    return i_vec;
 }
- */
+
+#endif // __AVX2__
 
 // c = cr + I * ci
 // Z(n+1) = (|Re(Z(n))| + I * |Imag(Z(n))|)^2 + c = (|zr| + I * |zi|)^2 + (cr + I * ci)
 // Re(Z(n+1)) = (zr)^2 - (zi)^2 + cr
 // Img(Z(n+1)) = 2|zr||zi| + ci = 2|zrzi| + ci
+//TODO shorter complex representation
 void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img)
 {
@@ -196,6 +228,8 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
     }
 }
 
+#ifdef __AVX2__
+
 //TODO fused multiplication, addition and subtraction
 void burning_ship_AVX256(float complex start, size_t width, size_t height,
                          float res, unsigned n, unsigned char* img)
@@ -272,11 +306,22 @@ void burning_ship_AVX256(float complex start, size_t width, size_t height,
         }
 
         //TODO
-        /*
         for (; w < FOUR_DIV(width); w+=SIMD_STEP) {
-            burning_ship_SIMD_step(w + h * width, s_cr_256ps[0], s_ci_256ps[0], n_vec, img);
+            __m128 cr = _mm_set1_ps((float) w) + incr[0];
+            cr = _mm_scale2rng_ps(cr, _mm256_castps256_ps128(width_256), _mm256_castps256_ps128(res_vec));
+
+            //TODO
+            __m128i i_vec = burning_ship_SIMD_step(cr, _mm256_castps256_ps128(ci), n,
+                                                   _mm256_castps256_ps128(two),
+                                                   _mm256_castps256_ps128(abs_msk),
+                                                   _mm256_castps256_ps128(limit));
+
+            //TODO
+            __m128i pvals = _mm_scaleclr_ps(i_vec, _mm256_castps256_ps128(n_vec));
+            pvals = _mm_shuffle_epi8(pvals, _mm256_castsi256_si128(mv2hilo32lolo32msk));
+
+            _mm_storeu_si32((__m128i_u *) (img + w + h * width), pvals); //TODO
         }
-         */
 
         // TODO
         for (; w < width; w++) {
@@ -284,3 +329,5 @@ void burning_ship_AVX256(float complex start, size_t width, size_t height,
         }
     }
 }
+
+#endif // __AVX2__

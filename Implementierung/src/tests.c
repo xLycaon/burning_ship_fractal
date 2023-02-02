@@ -21,8 +21,8 @@ void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params 
         exit(EXIT_FAILURE);
     }
 
-    bs1(params.start, params.width, params.height, params.res, params.n, img1);
-    bs2(params.start, params.width, params.height, params.res, params.n, img2);
+    bs1(params.start, params.width, params.height, (float) params.res, params.n, img1);
+    bs2(params.start, params.width, params.height, (float) params.res, params.n, img2);
 
     if (memcmp(img1, img2, i_size) != 0) {
         fprintf(stderr, "TEST: Image sanity DID NOT pass!\n");

@@ -3,25 +3,6 @@
 
 #include "utils.h"
 
-//TODO
-#define WARN(W, E, N) ("WARNING: Only "#W" out of "#E" bytes were able to be written in TOTAL ("#N")!")
-
-const struct COLOR_TB2 BW_CTB = {
-        .entry[1] = {0xff, 0xff, 0xff, 0},
-        .entry[0] = {0, 0, 0, 0}
-};
-
-/*
-const struct COLOR_TB16 BGW_CTB = { // TODO möglicherweise zu Grob
-        .entry[0] = {0xff, 0xff, 0xff, 0xff},
-        .entry[1] = {242, 243, 243, 0},
-        .entry[2] = {189, 190, 190, 0},
-        .entry[3] = {137, 137, 137, 0},
-        .entry[4] = {84, 84, 84, 0},
-        .entry[5] = {31, 31, 31, 0}
-};
- */
-
 const struct COLOR_TB16 BGW_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0xff, 0xff, 0},
             .entry[1] = {0xee, 0xee, 0xee, 0},
@@ -91,9 +72,9 @@ static inline BMP_H creat_bmph(struct DIM dim) {
     bmp.planes = 1;
     bmp.bpp = BYTESPP * 8;
     bmp.compression = 0;
-    bmp.img_size = 0; //TODO
-    bmp.Xppm = 0; //TODO scaling?
-    bmp.Yppm = 0; //TODO scaling?
+    bmp.img_size = 0;
+    bmp.Xppm = 0;
+    bmp.Yppm = 0;
     bmp.total_colors = TOTAL_COLORS;
     bmp.important_colors = IMPORTANT_COLORS;
     return bmp;
@@ -109,18 +90,10 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 
 	// Write BMP HEADER into file
     BMP_H bmph = creat_bmph(dim);
-    written += fwrite((char *) &bmph, sizeof (char), sizeof (BMP_H), file);
-	if ( written != sizeof (BMP_H) ) {
-	    fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the Header were able to be written!\n",
-	            written, sizeof (BMP_H));
-	}
+    written += (ssize_t) fwrite((char *) &bmph, sizeof (char), sizeof (BMP_H), file);
 
     // Write COLOR TABLE into file
-    written += fwrite(&BGW_EXTENDED_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
-    if ( written != sizeof (BMP_H) + sizeof (struct COLOR_TB16) ) {
-        fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the COLOR TABLE were able to be written!\n",
-                written - sizeof (BMP_H), sizeof (struct COLOR_TB16));
-    }
+    written += (ssize_t) fwrite(&BGW_EXTENDED_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
 
     // PADDING MEM
     unsigned char npad = BMP_ROW_PADDING(bmph.img_width);
@@ -129,12 +102,8 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 
 	// Write IMAGE DATA row-wise reversed into file
 	for (size_t y = bmph.img_height-1; (y+1) > 0; y--) {
-        written += fwrite(&(img[y * BMDIM(bmph.img_width)]), sizeof (char), BMDIM(bmph.img_width), file);
-        written += fwrite(zeros, sizeof (char), npad, file);
-	}
-	if ( written != bmph.fsize ) {
-	    fprintf(stderr, "WARNING: ONLY %lu/%u BYTES were able to be written in total!\n",
-	            written, bmph.fsize);
+        written += (ssize_t) fwrite(&(img[y * BMDIM(bmph.img_width)]), sizeof (char), BMDIM(bmph.img_width), file);
+        written += (ssize_t) fwrite(zeros, sizeof (char), npad, file);
 	}
 
 	fclose(file);
