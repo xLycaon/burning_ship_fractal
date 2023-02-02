@@ -79,6 +79,25 @@ const struct COLOR_TB16 FIRE_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
+const struct COLOR_TB16 OB_CTB = {
+    		.entry[0] = {0x00, 0x95, 0xf1, 0},
+            .entry[1] = {0x11, 0x9c, 0xe4, 0},
+            .entry[2] = {0x22, 0xa3, 0xd7, 0},
+            .entry[3] = {0x33, 0xaa, 0xca, 0},
+            .entry[4] = {0x44, 0xb1, 0xbd, 0},
+            .entry[5] = {0x55, 0xb8, 0xb0, 0},
+            .entry[6] = {0x66, 0xbf, 0xa3, 0},
+            .entry[7] = {0x77, 0xc6, 0x96, 0},
+            .entry[8] = {0x88, 0xcd, 0x89, 0},
+            .entry[9] = {0x99, 0xd4, 0x7c, 0},
+            .entry[10] = {0xaf, 0x5d, 0x6b, 0},
+            .entry[11] = {0xc1, 0x57, 0x5e, 0},
+            .entry[12] = {0xd2, 0x51, 0x51, 0},
+            .entry[13] = {0xe4, 0x4c, 0x43, 0},
+            .entry[14] = {0xf5, 0x46, 0x36, 0},
+            .entry[15] = {0x00, 0x00, 0x00, 0}
+};
+
 static inline BMP_H creat_bmph(struct DIM dim) {
     BMP_H bmp;
     bmp.magic = MAGIC;
@@ -116,7 +135,7 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 	}
 
     // Write COLOR TABLE into file
-    written += fwrite(&BGW_EXTENDED_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
+    written += fwrite(&OB_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
     if ( written != sizeof (BMP_H) + sizeof (struct COLOR_TB16) ) {
         fprintf(stderr, "WARNING: ONLY %lu/%lu Bytes of the COLOR TABLE were able to be written!\n",
                 written - sizeof (BMP_H), sizeof (struct COLOR_TB16));

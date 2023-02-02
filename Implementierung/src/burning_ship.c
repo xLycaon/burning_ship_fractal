@@ -19,7 +19,7 @@
 #define LIMIT 4
 
 #define SCALE2RNG(POS, RNG, RES, TYPE) (((TYPE) (POS) / (TYPE) (RNG) - (TYPE) 0.5) * (RES))
-#define SCALE_CLR(ITER, N, TYPE) ((unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-1)))
+#define SCALE_CLR(ITER, N, TYPE) (ITER == N ? (TOTAL_COLORS-1) : (unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-2)))
 
 #define SIMD_STEP (4)
 #define AVX_STEP (8)
