@@ -161,6 +161,8 @@ int main(int argc, char* argv[argc]) {
 #ifdef __AVX2__
             ,{.f = burning_ship_AVX256}
 #endif // __AVX2__
+            ,{.d = burning_ship_d} //TODO macro
+            ,{.ld = burning_ship_ld} //TODO macro
     };
 
     // TODO

@@ -66,6 +66,42 @@ __m256i _mm256_scaleclr_ps(__m256i iter, __m256 n)
 
 #endif // __AVX2__
 
+//TODO fabs for each type due to value promotion
+#define BURNING_SHIP(START, WIDTH, HEIGHT, RES, N, IMG, TYPE)\
+do \
+{ \
+TYPE s_cr = (TYPE) creall(START); \
+TYPE s_ci = (TYPE) cimagl(HEIGHT); \
+\
+for (size_t h = 0; h < HEIGHT; h++) \
+{\
+TYPE ci = SCALE2RNG(h, HEIGHT, RES, TYPE) + s_ci; \
+\
+for (size_t w = 0; w < WIDTH; w++) \
+{ \
+TYPE cr = SCALE2RNG(w, WIDTH, RES, TYPE) + s_cr; \
+\
+TYPE zr = 0.0f;\
+TYPE zi = 0.0f; \
+\
+unsigned i = 0; \
+while (i < N) \
+{ \
+TYPE tmp = zr*zr - zi*zi + cr; \
+zi = (TYPE) 2.0 * (TYPE) fabs(zr*zi) + ci; \
+zr = tmp; \
+\
+if (zr*zr + zi*zi > LIMIT) \
+break; \
+\
+i++; \
+}\
+\
+IMG[w + h * WIDTH] = SCALE_CLR(i, N, TYPE); \
+}\
+}\
+} while(0)
+
 static inline __attribute__((always_inline))
 void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned char* img)
 {
@@ -128,6 +164,26 @@ __m128i burning_ship_SIMD_step(__m128 cr, __m128 ci, unsigned n,
 // Re(Z(n+1)) = (zr)^2 - (zi)^2 + cr
 // Img(Z(n+1)) = 2|zr||zi| + ci = 2|zrzi| + ci
 //TODO shorter complex representation
+//TODO macro
+void burning_ship(float complex start, size_t width, size_t height,
+                  float res, unsigned n, unsigned char* img)
+{
+    BURNING_SHIP(start, width, height, res, n, img, float);
+}
+
+void burning_ship_d(double complex start, size_t width, size_t height,
+                  double res, unsigned n, unsigned char* img)
+{
+    BURNING_SHIP(start, width, height, res, n, img, double);
+}
+
+void burning_ship_ld(long double complex start, size_t width, size_t height,
+                    long double res, unsigned n, unsigned char* img)
+{
+    BURNING_SHIP(start, width, height, res, n, img, long double);
+}
+
+/*
 void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img)
 {
@@ -148,6 +204,7 @@ void burning_ship(float complex start, size_t width, size_t height,
 		}
 	}
 }
+ */
 
 //TODO sanity
 void burning_ship_V1(float complex start, size_t width, size_t height,
