@@ -3,6 +3,7 @@
 
 #include "utils.h"
 
+//Black Grey White Color Table
 const struct COLOR_TB16 BGW_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0xff, 0xff, 0},
             .entry[1] = {0xee, 0xee, 0xee, 0},
@@ -22,6 +23,7 @@ const struct COLOR_TB16 BGW_EXTENDED_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
+//Red Blue Color Table
 const struct COLOR_TB16 RB_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0x00, 0x00, 0},
             .entry[1] = {0xee, 0x00, 0x11, 0},
@@ -41,6 +43,7 @@ const struct COLOR_TB16 RB_EXTENDED_CTB = {
             .entry[15] = {0x00, 0x00, 0xff, 0}
 };
 
+//Red Yellow Color Table
 const struct COLOR_TB16 FIRE_CTB = {
     		.entry[0] = {0x00, 0x44, 0xff, 0},
             .entry[1] = {0x00, 0x51, 0xff, 0},
@@ -60,6 +63,7 @@ const struct COLOR_TB16 FIRE_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
+//Orange Blue Color Table
 const struct COLOR_TB16 OB_CTB = {
     		.entry[0] = {0xff, 0xff, 0xff, 0},
             .entry[1] = {0x00, 0x95, 0xf1, 0},
@@ -79,6 +83,7 @@ const struct COLOR_TB16 OB_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
+//Create a BMP Header
 static inline BMP_H creat_bmph(struct DIM dim) {
     BMP_H bmp;
     bmp.magic = MAGIC;
@@ -99,6 +104,7 @@ static inline BMP_H creat_bmph(struct DIM dim) {
     return bmp;
 }
 
+//Write a BMP file
 ssize_t
 writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 	FILE* file;

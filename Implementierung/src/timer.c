@@ -6,6 +6,7 @@
 #define GIGA 1000000000L
 #define NANO 1E-9
 
+// Add two timespecs and store the result in res.
 static void ts_add(struct timespec a, struct timespec b, struct timespec* res) {
     res->tv_nsec = a.tv_nsec + b.tv_nsec;
     res->tv_sec = res->tv_nsec / GIGA;
@@ -13,6 +14,7 @@ static void ts_add(struct timespec a, struct timespec b, struct timespec* res) {
     res->tv_sec += a.tv_sec + b.tv_sec;
 }
 
+// Subtract two timespecs and store the result in res.
 static void ts_sub(struct timespec minuend, struct timespec subtrahend, struct timespec* res) {
     res->tv_sec = minuend.tv_sec;
     res->tv_nsec = minuend.tv_nsec - subtrahend.tv_nsec;
@@ -23,6 +25,7 @@ static void ts_sub(struct timespec minuend, struct timespec subtrahend, struct t
     res->tv_sec -= subtrahend.tv_sec;
 }
 
+// Compare two timespecs.
 static int ts_cmp(struct timespec a, struct timespec b) {
     if (a.tv_sec == b.tv_sec) {
         if (a.tv_nsec < b.tv_nsec) {
@@ -36,10 +39,12 @@ static int ts_cmp(struct timespec a, struct timespec b) {
     return 1;
 }
 
+// Convert timespec to seconds.
 static double to_secs(struct timespec t) {
     return (double) t.tv_sec + NANO * (double) t.tv_nsec;
 }
 
+// Run the function n times and print the average, min and max runtime.
 void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
 
     struct timespec run;

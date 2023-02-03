@@ -10,7 +10,9 @@
 #ifdef __AVX2__
 #include <avx2intrin.h>
 
+//Divides a value by 8 and rounds down
 #define OCT_DIV(X) ((X) & ~0x7l)
+//Pixels per step for AVX
 #define AVX_STEP (8)
 #endif // __AVX2__
 
@@ -21,10 +23,15 @@
 // Therefore zr^2 + zi^2 ≤ 4
 #define LIMIT 4
 
+//Scales a position to a range of values and then scales it to the resolution of the image 
 #define SCALE2RNG(POS, RNG, RES, TYPE) (((TYPE) (POS) / (TYPE) (RNG) - (TYPE) 0.5) * (RES))
+
+//Scales the iteration count to a color value
 #define SCALE_CLR(ITER, N, TYPE) ( (unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-1)))
 
+//Pixels per step for SIMD
 #define SIMD_STEP (4)
+//Divides a value by 4 and rounds down
 #define FOUR_DIV(X) ((X) & ~3ul)
 
 // Moves each lower byte value of 4 xmm 32-bit chunks to lower 32bit
@@ -33,12 +40,14 @@
 // Sets a 32-bit chunk to zero (.) -> (0)
 #define Z_MSK (0x80808080)
 
+// Scales a position to a range of values and then scales it to the resolution of the image for SIMD
 static inline __attribute__((always_inline))
 __m128 _mm_scale2rng_ps(__m128 pos, __m128 rng, __m128 res)
 {
     return (pos * _mm_rcp_ps(rng) - _mm_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
 }
 
+// Scales the iteration count to a color value for SIMD
 //TODO color scaling not right
 static inline __attribute__((always_inline))
 __m128i _mm_scaleclr_ps(__m128i iter, __m128 n)
@@ -50,12 +59,14 @@ __m128i _mm_scaleclr_ps(__m128i iter, __m128 n)
 
 #ifdef __AVX2__
 
+// Scales a position to a range of values and then scales it to the resolution of the image for AVX
 static inline __attribute__((always_inline))
 __m256 _mm256_scale2rng_ps(__m256 pos, __m256 rng, __m256 res)
 {
     return _mm256_fmsub_ps(pos, _mm256_rcp_ps(rng), _mm256_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
 }
 
+// Scales the iteration count to a color value for AVX
 //TODO color scaling function accuracy
 static inline __attribute((always_inline))
 __m256i _mm256_scaleclr_ps(__m256i iter, __m256 n)
@@ -102,6 +113,7 @@ IMG[w + h * WIDTH] = SCALE_CLR(i, N, TYPE); \
 }\
 } while(0)
 
+//Calculates the number of iterations for a point in the Burning Ship fractal, stores the result in an array, and scales it for display.
 static inline __attribute__((always_inline))
 void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned char* img)
 {
@@ -127,6 +139,7 @@ void burning_ship_step(size_t index, float cr, float ci, unsigned n, unsigned ch
 //TODO
 #ifdef __AVX2__
 
+//Calculates the number of iterations for a point in the Burning Ship fractal, stores the result in an array, and scales it for display.
 static inline __attribute__((always_inline))
 __m128i burning_ship_SIMD_step(__m128 cr, __m128 ci, unsigned n,
                                __m128 two, __m128 abs_msk, __m128 limit) {
@@ -183,13 +196,16 @@ void burning_ship_ld(long double complex start, size_t width, size_t height,
     BURNING_SHIP(start, width, height, res, n, img, long double);
 }
 
-/*
+//Generates the Burning Ship fractal by calling the burning_ship_step function for each point
+
 void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img)
 {
+    // Get the starting imaginary and real values from the complex number 'start'
     float s_cr = crealf(start);
     float s_ci = cimagf(start);
 
+    //loop over all pixels
 	for (size_t h = 0; h < height; h++) {
 
         // ci := y-coord + imaginary part offset
@@ -199,17 +215,18 @@ void burning_ship(float complex start, size_t width, size_t height,
         {
 			// cr := x-coord + real part offset
             float cr = SCALE2RNG(w, width, res, float) + s_cr;
-
             burning_ship_step(w + h * width, cr, ci, n, img);
 		}
 	}
 }
- */
+ 
 
 //TODO sanity
+//Generates the Burning Ship fractal by calling the burning_ship_step function for each point 
 void burning_ship_V1(float complex start, size_t width, size_t height,
                      float res, unsigned n, unsigned char* img)
 {
+    // Get the starting imaginary and real values from the complex number 'start'
     float s_ci = cimagf(start);
     float s_cr = crealf(start);
 
@@ -235,18 +252,20 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
                                        (int) Z_MSK,
                                        (int) MV_4_SEG32);
 
+    // LOOP THROUGH HEIGHT
     for (size_t h = 0; h < height; h++) {
 
         // ci := y-coord + imaginary part offset
         __m128 ci = _mm_scale2rng_ps(_mm_set1_ps((float) h), height_128, res_128) + s_ci_vec;
 
-        size_t w = 0;
+        // LOOP THROUGH WIDTH (PROCESSING 4 PIXELS AT A TIME)        size_t w = 0;
         for (; w < FOUR_DIV(width); w += SIMD_STEP)
         {
             // cr := x-coord + real part offset
             __m128 cr = _mm_set1_ps((float) w) + incr;
             cr = _mm_scale2rng_ps(cr, width_128, res_128) + s_cr_vec;
 
+            // INITIALIZE ZEROS
             __m128 zr = _mm_setzero_ps();
             __m128 zi = _mm_setzero_ps();
 
@@ -255,6 +274,8 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
             // ESCAPE LOOP
             __m128i i_vec = {0};
             unsigned i = 0;
+
+            // ITERATE UNTIL LIMIT IS REACHED OR MAX ITERATIONS IS REACHED
             while (i < n)
             {
                 __m128 tmp = zr*zr - zi*zi + cr;
@@ -288,9 +309,11 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
 #ifdef __AVX2__
 
 //TODO fused multiplication, addition and subtraction
+//Generates the Burning Ship fractal by calling the burning_ship_step function for each point (AVX2)
 void burning_ship_AVX256(float complex start, size_t width, size_t height,
                          float res, unsigned n, unsigned char* img)
 {
+    // Get the starting imaginary and real values from the complex number 'start'
     float s_ci = cimagf(start);
     float s_cr = crealf(start);
 
@@ -320,16 +343,20 @@ void burning_ship_AVX256(float complex start, size_t width, size_t height,
                                           Z_MSK,
                                           MV_4_SEG32);
 
+    // LOOP THROUGH HEIGHT
     for (size_t h = 0; h < height; h++) {
 
+        // ci := y-coord + imaginary part offset
         __m256 ci = _mm256_scale2rng_ps(_mm256_set1_ps((float) h), height_256, res_vec) + s_ci_256ps;
 
         size_t w = 0;
+        // LOOP THROUGH WIDTH (PROCESSING 8 PIXELS AT A TIME)
         for (; w < OCT_DIV(width); w+=AVX_STEP)
         {
             __m256 cr = _mm256_set1_ps((float) w) + incr;
             cr = _mm256_scale2rng_ps(cr, width_256, res_vec) + s_cr_256ps;
 
+            // INITIALIZE ZEROS
             __m256 zr = _mm256_setzero_ps();
             __m256 zi = _mm256_setzero_ps();
 
@@ -337,6 +364,7 @@ void burning_ship_AVX256(float complex start, size_t width, size_t height,
 
             __m256i i_vec = {0};
             unsigned i = 0;
+            // ITERATE UNTIL LIMIT IS REACHED OR MAX ITERATIONS IS REACHED
             while (i < n)
             {
                 // tmp = (zr*zr) + (-(zi*zi) + cr)
@@ -363,6 +391,7 @@ void burning_ship_AVX256(float complex start, size_t width, size_t height,
         }
 
         //TODO
+        // LOOP THROUGH WIDTH (PROCESSING 4 PIXELS AT A TIME)
         for (; w < FOUR_DIV(width); w+=SIMD_STEP) {
             __m128 cr = _mm_set1_ps((float) w) + incr[0];
             cr = _mm_scale2rng_ps(cr, _mm256_castps256_ps128(width_256), _mm256_castps256_ps128(res_vec));
@@ -381,6 +410,7 @@ void burning_ship_AVX256(float complex start, size_t width, size_t height,
         }
 
         // TODO
+        // LOOP THROUGH WIDTH (PROCESSING 1 PIXEL AT A TIME)
         for (; w < width; w++) {
             burning_ship_step((w + h * width), s_cr, s_ci, n, img);
         }

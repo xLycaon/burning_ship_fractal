@@ -50,6 +50,7 @@ FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 //TODO header
 extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
 
+//Converts a string argument to an integer, handling errors in the conversion process.
 static inline int atoi_s(const char* arg) {
     errno = 0;
     char* endptr;
@@ -63,6 +64,7 @@ static inline int atoi_s(const char* arg) {
     return (int) res;
 }
 
+//Converts a string argument to a long, handling errors in the conversion process.
 static inline float atof_s(const char* arg) {
     errno = 0;
     char* endptr;
@@ -76,12 +78,14 @@ static inline float atof_s(const char* arg) {
     return res;
 }
 
+//Checks if a value is within a given range.
 static inline void check_range(long val, long min, long max) {
     if (val < min || val > max) {
         FAIL("%ld is out of bounds [%ld, %ld]!\n", val, min, max);
     }
 }
 
+//Checks if a value is within a given range (float).
 static inline void check_range_f(long double val, long double min, long double max) { //TODO double
     if (val < min || val > max) {
         FAIL("%Lf is out of bounds [%Lf, %Lf]!\n", val, min, max);
@@ -89,7 +93,6 @@ static inline void check_range_f(long double val, long double min, long double m
 }
 
 extern unsigned is_gmp; //TODO
-
 //TODO limit range of s_val and pres
 int main(int argc, char* argv[argc]) {
 
@@ -177,17 +180,17 @@ int main(int argc, char* argv[argc]) {
 	// UPDATES DEFAULT PARAMETERS
 	while ( (opt = getopt_long(argc, argv, optstr, longopts, &l_optind)) != -1) {
 		switch (opt) {
-			case 'V':
+			case 'V': //Selects the implementation to use
                 impl_ind = atoi_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
                 check_range(impl_ind, 0, (sizeof burning_ship_impl / sizeof burning_ship_impl[0]) - 1);
 				break;
-			case 'B':
+			case 'B': //Sets the benchmarking on and sets the time cap
                 time_cap = atoi_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
                 check_range(time_cap, MIN_ITER, MAX_ITER);
 				break;
-			case 's': //TODO multiple precision
+			case 's': //Sets the starting point of the fractal //TODO multiple precision
                 tmp = strtok(optarg, sep);
                 if (tmp == NULL) {
                     FAIL("Could not parse first parameter of -s!\n");
@@ -206,7 +209,7 @@ int main(int argc, char* argv[argc]) {
 
 				s_val = s_real + I * s_imag;
 				break;
-			case 'd':
+			case 'd': //Sets the dimensions of the fractal
                 optset |= D_OPT;
 
                 tmp = strtok(optarg, sep);
@@ -225,21 +228,21 @@ int main(int argc, char* argv[argc]) {
                 PARG_CHECK_ERRNO(opt, tmp);
                 check_range(img_h, MIN_H, MAX_H); //TODO
 				break;
-			case 'n':
+			case 'n': //Maximum number of iterations for each pixel
                 optset |= N_OPT;
                 iter_n = atoi_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
                 check_range(iter_n, MIN_N, MAX_N);
 				break;
-			case 'r': //TODO multiple precision
+			case 'r': //Sets the resolution (Zoom) //TODO multiple precision
                 pres = atof_s(optarg);
                 PARG_CHECK_ERRNO(opt, optarg);
                 //check_range_f(pres, FLT_MIN, MIN_ZOOM);
 				break;
-            case 'o':
+            case 'o': //Sets the output file name
                 STRLCPY(file_name+DPATH_LEN, optarg,FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
                 break;
-            case 't':
+            case 't': //Enables testing
                 is_test = 1;
                 break;
                 /*
@@ -248,19 +251,19 @@ int main(int argc, char* argv[argc]) {
                 mpfr_set_default_prec(53); //TODO
                 break;
                  */
-			case 'h':
+			case 'h': //Prints help
 				printf("%s\n", USAGE);
 				printf("%s\n", USAGE_V);
 				exit(EXIT_SUCCESS);
-			case ':':
+			case ':': //Missing argument
                 if(optopt == 'B'){
                     time_cap = 1;
                     break;
                 }
 				FAIL("%c requires argument(s)!\n", optopt);
-            case '?':
+            case '?': //Unrecognized option
 				FAIL("Option %c unrecognized!\n", optopt);
-            default:
+            default: 
                 FAIL("Unknown ERROR!\n");
 		}
 	}
