@@ -2,6 +2,7 @@
 
 #include "bs_types.h"
 
+//burning_ship implementations with different precisions and with 1 step per iteration
 void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img);
 
@@ -19,7 +20,7 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
 
 #ifdef __AVX2__
 
-// AVX-Implementation of burning_ship
+// AVX-Implementation of burning_ship with 8 Steps per Iteration
 void burning_ship_AVX256(float complex start, size_t width, size_t height,
                      float res, unsigned n, unsigned char* img);
 

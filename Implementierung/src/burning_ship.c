@@ -34,7 +34,9 @@
 // Sets a 32-bit chunk to zero (.) -> (0)
 #define Z_MSK (0x80808080)
 
-// The following macro functions are used to scale the position to the range of the image and then to the resolution of the image for SIMD and AVX
+/* The following macro functions are used to scale the position to the range of the image and then to the resolution of the image for SISD, SIMD and AVX.
+The result is the position of the pixel in the complex plane. 
+*/
 #define SCALE2RNG(POS, RNG, RES, TYPE) (((TYPE) (POS) / (TYPE) (RNG) - (TYPE) 0.5) * (RES))
 
 static inline __attribute__((always_inline))
@@ -53,9 +55,9 @@ __m256 _mm256_scale2rng_ps(__m256 pos, __m256 rng, __m256 res)
 
 #endif // __AVX2__
 
-/*The following macro and functions are used to scale the iteration count to a color value for SIMD and AVX.
+/*The following macro and functions are used to scale the iteration count to a color value for SISD, SIMD and AVX.
 The color value is the iteration count divided by the maximum number of iterations, multiplied by the total number of colors.
-The result is rounded down to the nearest integer. The result represents the index of the color in the color table, which is defined in utils.c
+The result represents the index of the color in the color table, which is defined in utils.c
 */
 //TODO color scaling not right
 #define SCALE_CLR(ITER, N, TYPE) ( (unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-1)))
