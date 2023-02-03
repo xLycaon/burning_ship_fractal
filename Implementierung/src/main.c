@@ -50,7 +50,12 @@ FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 //TODO header
 extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
 
-//Converts a string argument to an integer, handling errors in the conversion process.
+/*
+atoi_s and atof_s are functioncs that resemble the functionality of atoi and atof from stdlib.h
+but they also check if the string contains only digits and if the value is within the range of the
+return type. If the string contains non-digit characters or the value is out of range, errno is set
+to EINVAL and 0 is returned. If the value is within range, errno is set to 0 and the value is returned.
+*/
 static inline int atoi_s(const char* arg) {
     errno = 0;
     char* endptr;
@@ -63,8 +68,6 @@ static inline int atoi_s(const char* arg) {
     }
     return (int) res;
 }
-
-//Converts a string argument to a long, handling errors in the conversion process.
 static inline float atof_s(const char* arg) {
     errno = 0;
     char* endptr;
@@ -78,14 +81,12 @@ static inline float atof_s(const char* arg) {
     return res;
 }
 
-//Checks if a value is within a given range.
+/*These two functions check if the value is within the range of the return type and calls FAIL if it is out of range*/
 static inline void check_range(long val, long min, long max) {
     if (val < min || val > max) {
         FAIL("%ld is out of bounds [%ld, %ld]!\n", val, min, max);
     }
 }
-
-//Checks if a value is within a given range (float).
 static inline void check_range_f(long double val, long double min, long double max) { //TODO double
     if (val < min || val > max) {
         FAIL("%Lf is out of bounds [%Lf, %Lf]!\n", val, min, max);

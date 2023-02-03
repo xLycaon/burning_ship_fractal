@@ -23,12 +23,6 @@
 // Therefore zr^2 + zi^2 ≤ 4
 #define LIMIT 4
 
-//Scales a position to a range of values and then scales it to the resolution of the image 
-#define SCALE2RNG(POS, RNG, RES, TYPE) (((TYPE) (POS) / (TYPE) (RNG) - (TYPE) 0.5) * (RES))
-
-//Scales the iteration count to a color value
-#define SCALE_CLR(ITER, N, TYPE) ( (unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-1)))
-
 //Pixels per step for SIMD
 #define SIMD_STEP (4)
 //Divides a value by 4 and rounds down
@@ -40,15 +34,32 @@
 // Sets a 32-bit chunk to zero (.) -> (0)
 #define Z_MSK (0x80808080)
 
-// Scales a position to a range of values and then scales it to the resolution of the image for SIMD
+// The following macro functions are used to scale the position to the range of the image and then to the resolution of the image for SIMD and AVX
+#define SCALE2RNG(POS, RNG, RES, TYPE) (((TYPE) (POS) / (TYPE) (RNG) - (TYPE) 0.5) * (RES))
+
 static inline __attribute__((always_inline))
 __m128 _mm_scale2rng_ps(__m128 pos, __m128 rng, __m128 res)
 {
     return (pos * _mm_rcp_ps(rng) - _mm_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
 }
 
-// Scales the iteration count to a color value for SIMD
+#ifdef __AVX2__
+
+static inline __attribute__((always_inline))
+__m256 _mm256_scale2rng_ps(__m256 pos, __m256 rng, __m256 res)
+{
+    return _mm256_fmsub_ps(pos, _mm256_rcp_ps(rng), _mm256_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
+}
+
+#endif // __AVX2__
+
+/*The following macro and functions are used to scale the iteration count to a color value for SIMD and AVX.
+The color value is the iteration count divided by the maximum number of iterations, multiplied by the total number of colors.
+The result is rounded down to the nearest integer. The result represents the index of the color in the color table, which is defined in utils.c
+*/
 //TODO color scaling not right
+#define SCALE_CLR(ITER, N, TYPE) ( (unsigned char) ((TYPE)(ITER)/(TYPE)(N) * (TYPE) (TOTAL_COLORS-1)))
+
 static inline __attribute__((always_inline))
 __m128i _mm_scaleclr_ps(__m128i iter, __m128 n)
 {
@@ -59,14 +70,6 @@ __m128i _mm_scaleclr_ps(__m128i iter, __m128 n)
 
 #ifdef __AVX2__
 
-// Scales a position to a range of values and then scales it to the resolution of the image for AVX
-static inline __attribute__((always_inline))
-__m256 _mm256_scale2rng_ps(__m256 pos, __m256 rng, __m256 res)
-{
-    return _mm256_fmsub_ps(pos, _mm256_rcp_ps(rng), _mm256_set1_ps(0.5f)) * res; //TODO _mm_set1_ps
-}
-
-// Scales the iteration count to a color value for AVX
 //TODO color scaling function accuracy
 static inline __attribute((always_inline))
 __m256i _mm256_scaleclr_ps(__m256i iter, __m256 n)
@@ -197,8 +200,7 @@ void burning_ship_ld(long double complex start, size_t width, size_t height,
 }
 
 //Generates the Burning Ship fractal by calling the burning_ship_step function for each point
-
-void burning_ship(float complex start, size_t width, size_t height,
+/*void burning_ship(float complex start, size_t width, size_t height,
                   float res, unsigned n, unsigned char* img)
 {
     // Get the starting imaginary and real values from the complex number 'start'
@@ -218,7 +220,7 @@ void burning_ship(float complex start, size_t width, size_t height,
             burning_ship_step(w + h * width, cr, ci, n, img);
 		}
 	}
-}
+}*/
  
 
 //TODO sanity
@@ -258,7 +260,8 @@ void burning_ship_V1(float complex start, size_t width, size_t height,
         // ci := y-coord + imaginary part offset
         __m128 ci = _mm_scale2rng_ps(_mm_set1_ps((float) h), height_128, res_128) + s_ci_vec;
 
-        // LOOP THROUGH WIDTH (PROCESSING 4 PIXELS AT A TIME)        size_t w = 0;
+        // LOOP THROUGH WIDTH (PROCESSING 4 PIXELS AT A TIME)        
+        size_t w = 0;
         for (; w < FOUR_DIV(width); w += SIMD_STEP)
         {
             // cr := x-coord + real part offset
