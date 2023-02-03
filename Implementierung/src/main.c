@@ -202,7 +202,7 @@ int main(int argc, char* argv[argc]) {
                 }
                 s_imag = atof_s(tmp);
                 PARG_CHECK_ERRNO(opt, tmp);
-                check_range_f(s_real, -RADIUS, RADIUS);
+                check_range_f(s_imag, -RADIUS, RADIUS);
 
 				s_val = s_real + I * s_imag;
 				break;
