@@ -10,9 +10,10 @@ void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params 
 
 void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon) {
     unsigned char *img1, *img2;
-    size_t different_pixels;
-    double difference_percentage;
     size_t i_size = params.width * params.height;
+
+    size_t different_pixels = 0;
+    double difference_percentage;
 
     if ( (img1 = malloc(i_size)) == NULL ) {
         exit(EXIT_FAILURE);
@@ -25,8 +26,12 @@ void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params 
     bs1(params.start, params.width, params.height, (float) params.res, params.n, img1);
     bs2(params.start, params.width, params.height, (float) params.res, params.n, img2);
 
-    different_pixels = memcmp(img1, img2, i_size);
+    for (size_t i = 0; i < i_size; i++) {
+        if(img1[i] != img2[i])
+            different_pixels++;
+    }
     difference_percentage = (double) different_pixels / i_size * 100;
+
     if(difference_percentage > epsilon)
         printf("TEST: Image difference is %lf%%\n", difference_percentage);
     else
