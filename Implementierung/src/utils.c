@@ -3,6 +3,7 @@
 
 #include "utils.h"
 
+//Black Grey White Color Table
 const struct COLOR_TB16 BGW_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0xff, 0xff, 0},
             .entry[1] = {0xee, 0xee, 0xee, 0},
@@ -22,6 +23,7 @@ const struct COLOR_TB16 BGW_EXTENDED_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
+//Red Blue Color Table
 const struct COLOR_TB16 RB_EXTENDED_CTB = {
     		.entry[0] = {0xff, 0x00, 0x00, 0},
             .entry[1] = {0xee, 0x00, 0x11, 0},
@@ -41,6 +43,7 @@ const struct COLOR_TB16 RB_EXTENDED_CTB = {
             .entry[15] = {0x00, 0x00, 0xff, 0}
 };
 
+//Red Yellow Color Table
 const struct COLOR_TB16 FIRE_CTB = {
     		.entry[0] = {0x00, 0x44, 0xff, 0},
             .entry[1] = {0x00, 0x51, 0xff, 0},
@@ -60,6 +63,27 @@ const struct COLOR_TB16 FIRE_CTB = {
             .entry[15] = {0x00, 0x00, 0x00, 0}
 };
 
+//Orange Blue Color Table
+const struct COLOR_TB16 OB_CTB = {
+    		.entry[0] = {0xff, 0xff, 0xff, 0},
+            .entry[1] = {0x00, 0x95, 0xf1, 0},
+            .entry[2] = {0x13, 0x8f, 0xe3, 0},
+            .entry[3] = {0x26, 0x89, 0xd4, 0},
+            .entry[4] = {0x44, 0xb1, 0xbd, 0},
+            .entry[5] = {0x55, 0xb8, 0xb0, 0},
+            .entry[6] = {0x66, 0xbf, 0xa3, 0},
+            .entry[7] = {0x77, 0xc6, 0x96, 0},
+            .entry[8] = {0x88, 0xcd, 0x89, 0},
+            .entry[9] = {0x99, 0xd4, 0x7c, 0},
+            .entry[10] = {0xaf, 0x5d, 0x6b, 0},
+            .entry[11] = {0xc1, 0x57, 0x5e, 0},
+            .entry[12] = {0xd2, 0x51, 0x51, 0},
+            .entry[13] = {0xe4, 0x4c, 0x43, 0},
+            .entry[14] = {0xf5, 0x46, 0x36, 0},
+            .entry[15] = {0x00, 0x00, 0x00, 0}
+};
+
+//Create a BMP Header
 static inline BMP_H creat_bmph(struct DIM dim) {
     BMP_H bmp;
     bmp.magic = MAGIC;
@@ -80,6 +104,7 @@ static inline BMP_H creat_bmph(struct DIM dim) {
     return bmp;
 }
 
+//Write a BMP file
 ssize_t
 writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
 	FILE* file;
@@ -93,7 +118,7 @@ writef_bmp(unsigned char* img, const char* path, struct DIM dim) {
     written += (ssize_t) fwrite((char *) &bmph, sizeof (char), sizeof (BMP_H), file);
 
     // Write COLOR TABLE into file
-    written += (ssize_t) fwrite(&BGW_EXTENDED_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
+    written += (ssize_t) fwrite(&OB_CTB, sizeof (char), sizeof (struct COLOR_TB16), file);
 
     // PADDING MEM
     unsigned char npad = BMP_ROW_PADDING(bmph.img_width);

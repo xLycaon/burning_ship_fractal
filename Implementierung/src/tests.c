@@ -7,7 +7,7 @@
 
 void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon);
 
-
+// Tests the similarity of the given implementation for the given parameters to the reference implementation
 void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon) {
     unsigned char *img1, *img2;
     size_t i_size = params.width * params.height;
