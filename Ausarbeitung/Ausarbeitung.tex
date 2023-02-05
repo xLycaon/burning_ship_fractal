@@ -91,7 +91,7 @@ Die Tabelle zeigt den Fehlerquotienten der Implementierungen von SIMD und AVX. E
 \section{Performanzanalyse}
 Wir haben mit verschiedenen Eingaben Laufzeitmessungen durchgeführt. Alle Messungen, die in diesem Unterabschnitt erläutert werden, sind auf einem System mit einem Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz (8 CPUs), ~4.2GHz Prozessor, 16384MB Arbeitsspeicher, Windows 10 Home 64-bit, 256KB L1, 1MB L2 und 8MB L3.
 
-Wir haben in allen Optimierungslevel getestet. Die folgende Abbildungen wurden mit -O3 kompiliert. Abbildung \ref{fig:progressive_n} zeigt, die durchschnittliche Laufzeite von drei verschiedenen Implementierungen, in Abhängigkeit von dem maximalen Anzahl von Iterationen. Abbildung \ref{fig:small_ship} stellt die durchschnittliche Performanze der drei Implementierungen beim \nameref{fig:small_ship}, abhängig von den Dimensionen dar. Die Eingaben sind so gewählt, damit die Performanze bei verschiedenen Bildgrößen und maximale Iterationsschritte deutlich darzustellen
+Wir haben in allen Optimierungsstufen getestet. Die folgende Abbildungen wurden mit -O3 kompiliert. Abbildung \ref{fig:progressive_n} zeigt, die durchschnittliche Laufzeite von drei verschiedenen Implementierungen, in Abhängigkeit von dem maximalen Anzahl von Iterationen. Abbildung \ref{fig:small_ship} stellt die durchschnittliche Performanze der drei Implementierungen beim \nameref{fig:small_ship}, abhängig von den Dimensionen dar. Die Eingaben sind so gewählt, damit die Performanze bei verschiedenen Bildgrößen und maximale Iterationsschritte deutlich darzustellen
 \begin{figure}[htp]
     \centering
     \includegraphics[width=14cm]{Ausarbeitung/progressive_n.png}
