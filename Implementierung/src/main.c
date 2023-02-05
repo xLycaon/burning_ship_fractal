@@ -193,6 +193,10 @@ int main(int argc, char* argv[argc]) {
                 check_range_f(pres, 1E-16, MIN_ZOOM); //TODO
 				break;
             case 'o':
+              if (argv[optind-1][0] == '/' || argv[optind-1][0] == '.') {
+                fprintf(stderr, "ERROR: Output path cannot be an absolute path.\n");
+                exit(EXIT_FAILURE);
+            }
                 STRLCPY(file_name+DPATH_LEN, optarg,FILENAME_MAX - BMP_EXT_LEN - DPATH_LEN - 1);
                 break;
             case 't':
