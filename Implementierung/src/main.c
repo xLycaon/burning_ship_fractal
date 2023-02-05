@@ -36,6 +36,8 @@
 #define DPATH_LEN 2
 #define BMP_EXT_LEN 4
 
+#define EPSILON 0.0001 //constant for sanity test, if images are equal there are less than EPSILON% different pixels
+
 // END CONSTANTS
 
 #define D_OPT (0x1)
@@ -49,7 +51,7 @@ FAIL("Param %s in -%c overflows!\n", (OPTARG), (OPT)); \
 }
 
 //TODO header
-extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params);
+extern void test_image_sanity(burning_ship_t bs1, burning_ship_t bs2, struct BS_Params params, double epsilon);
 
 static inline int atoi_s(const char* arg) {
     errno = 0;
@@ -245,7 +247,7 @@ int main(int argc, char* argv[argc]) {
                 .res = (float) pres,
                 .n = iter_n,
                 .img = NULL
-        });
+        },EPSILON);
         exit(EXIT_SUCCESS);
     }
 
