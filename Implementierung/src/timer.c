@@ -57,7 +57,7 @@ void time_fn(burning_ship_t fn, struct BS_Params params, unsigned n) {
 
     for (unsigned i = 0; i < n; i++) {
         clock_gettime(CLOCK_MONOTONIC, &start);
-        fn(params.start, params.width, params.height, params.res, params.n, params.img);
+        fn(params.start, params.width, params.height, params.res, params.n, params.img); //TODO
         clock_gettime(CLOCK_MONOTONIC, &end);
 
         ts_sub(end, start, &run);
