@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def run_benchmark(width, n, start1,start2, res, v):
-    os.chdir("C:\\Users\\vladm\\CLionProjects\\team146\\Implementierung")
+    os.chdir("INSERT PATH HERE")
     cmd = f"wsl.exe ./prog -d{width[0]},{width[0]} -n{n} -s{start1},{start2} -r{res} -V{v} -B2 2>&1" #Change the number of the -B param to increase the number of images created,
                                                                                                      #the higher the number the more accurate the benchmark
     output = subprocess.run(['cmd', '/c', cmd], capture_output=True, text=True)
